@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.vertx.ext.neo4j;
+package io.reactiverse.neo4j;
 
 /**
  * Inspired by Google Guava annotation of the same name, used to mark some code visible for testing purposes only

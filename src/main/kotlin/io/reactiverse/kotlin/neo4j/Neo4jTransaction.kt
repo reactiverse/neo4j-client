@@ -13,9 +13,9 @@
  *
  * You may elect to redistribute this code under either of these licenses.
  */
-package io.vertx.kotlin.ext.neo4j
+package io.reactiverse.kotlin.neo4j
 
-import io.vertx.ext.neo4j.Neo4jTransaction
+import io.reactiverse.neo4j.Neo4jTransaction
 import io.vertx.kotlin.coroutines.awaitResult
 import org.neo4j.driver.Query
 import org.neo4j.driver.Record
@@ -23,10 +23,10 @@ import org.neo4j.driver.Value
 import org.neo4j.driver.summary.ResultSummary
 
 /**
- * Suspending version of method [io.vertx.ext.neo4j.Neo4jTransaction.commit]
+ * Suspending version of method [io.reactiverse.neo4j.Neo4jTransaction.commit]
  *
  *
- * NOTE: This function has been automatically generated from [io.vertx.ext.neo4j.Neo4jTransaction] using Vert.x codegen.
+ * NOTE: This function has been automatically generated from [io.reactiverse.neo4j.Neo4jTransaction] using Vert.x codegen.
  */
 suspend fun Neo4jTransaction.commitAwait(): Unit {
   return awaitResult {
@@ -35,10 +35,10 @@ suspend fun Neo4jTransaction.commitAwait(): Unit {
 }
 
 /**
- * Suspending version of method [io.vertx.ext.neo4j.Neo4jTransaction.rollback]
+ * Suspending version of method [io.reactiverse.neo4j.Neo4jTransaction.rollback]
  *
  *
- * NOTE: This function has been automatically generated from [io.vertx.ext.neo4j.Neo4jTransaction] using Vert.x codegen.
+ * NOTE: This function has been automatically generated from [io.reactiverse.neo4j.Neo4jTransaction] using Vert.x codegen.
  */
 suspend fun Neo4jTransaction.rollbackAwait(): Unit {
   return awaitResult {
@@ -47,13 +47,13 @@ suspend fun Neo4jTransaction.rollbackAwait(): Unit {
 }
 
 /**
- * Suspending version of method [io.vertx.ext.neo4j.Neo4jTransaction.query]
+ * Suspending version of method [io.reactiverse.neo4j.Neo4jTransaction.query]
  *
  * @param query the cypher query
  * @param parameters the cypher parameters
  * @return [ResultSummary]
  *
- * NOTE: This function has been automatically generated from [io.vertx.ext.neo4j.Neo4jTransaction] using Vert.x codegen.
+ * NOTE: This function has been automatically generated from [io.reactiverse.neo4j.Neo4jTransaction] using Vert.x codegen.
  */
 suspend fun Neo4jTransaction.queryAwait(query: String, parameters: Value): ResultSummary {
   return awaitResult {
@@ -62,12 +62,12 @@ suspend fun Neo4jTransaction.queryAwait(query: String, parameters: Value): Resul
 }
 
 /**
- * Suspending version of method [io.vertx.ext.neo4j.Neo4jTransaction.query]
+ * Suspending version of method [io.reactiverse.neo4j.Neo4jTransaction.query]
  *
  * @param query the cypher statement
  * @return [ResultSummary]
  *
- * NOTE: This function has been automatically generated from [io.vertx.ext.neo4j.Neo4jTransaction] using Vert.x codegen.
+ * NOTE: This function has been automatically generated from [io.reactiverse.neo4j.Neo4jTransaction] using Vert.x codegen.
  */
 suspend fun Neo4jTransaction.queryAwait(query: Query): ResultSummary {
   return awaitResult {
@@ -76,12 +76,12 @@ suspend fun Neo4jTransaction.queryAwait(query: Query): ResultSummary {
 }
 
 /**
- * Suspending version of method [io.vertx.ext.neo4j.Neo4jTransaction.readQuery]
+ * Suspending version of method [io.reactiverse.neo4j.Neo4jTransaction.readQuery]
  *
  * @param query the cypher statement
  * @return [List<Record>]
  *
- * NOTE: This function has been automatically generated from [io.vertx.ext.neo4j.Neo4jTransaction] using Vert.x codegen.
+ * NOTE: This function has been automatically generated from [io.reactiverse.neo4j.Neo4jTransaction] using Vert.x codegen.
  */
 suspend fun Neo4jTransaction.readQueryAwait(query: Query): List<Record> {
   return awaitResult {

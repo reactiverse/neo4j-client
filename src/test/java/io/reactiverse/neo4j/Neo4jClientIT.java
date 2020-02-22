@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.vertx.ext.neo4j;
+package io.reactiverse.neo4j;
 
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;

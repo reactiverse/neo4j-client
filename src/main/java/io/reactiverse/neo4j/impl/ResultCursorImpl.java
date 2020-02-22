@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package io.vertx.ext.neo4j.impl;
+package io.reactiverse.neo4j.impl;
 
 import io.vertx.core.*;
 import org.neo4j.driver.Record;
 import org.neo4j.driver.async.ResultCursor;
 
-public class ResultCursorImpl implements io.vertx.ext.neo4j.ResultCursor {
+public class ResultCursorImpl implements io.reactiverse.neo4j.ResultCursor {
 
     private final ResultCursor cursor;
     private final Vertx vertx;
@@ -31,7 +31,7 @@ public class ResultCursorImpl implements io.vertx.ext.neo4j.ResultCursor {
     }
 
     @Override
-    public io.vertx.ext.neo4j.ResultCursor one(Handler<AsyncResult<Record>> handler) {
+    public io.reactiverse.neo4j.ResultCursor one(Handler<AsyncResult<Record>> handler) {
         Context context = vertx.getOrCreateContext();
         cursor.nextAsync()
                 .thenAccept(record -> {

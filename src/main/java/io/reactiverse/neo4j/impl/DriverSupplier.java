@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package io.vertx.ext.neo4j.impl;
+package io.reactiverse.neo4j.impl;
 
+import io.reactiverse.neo4j.VisibleForTesting;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.neo4j.VisibleForTesting;
 import org.neo4j.driver.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,7 +74,8 @@ public class DriverSupplier implements Supplier<Driver> {
         }
     }
 
-    @VisibleForTesting Driver singleNodeDriver(String singleNodeURL, String username, String password) {
+    @VisibleForTesting
+    Driver singleNodeDriver(String singleNodeURL, String username, String password) {
         if (noAuth()) {
             LOG.warn("Provided Neo4j config without credentials : should be acceptable in TEST mode only");
             return GraphDatabase.driver(TO_URI.apply(singleNodeURL), Config.builder().withLogging(Logging.slf4j()).withLeakedSessionsLogging().build());

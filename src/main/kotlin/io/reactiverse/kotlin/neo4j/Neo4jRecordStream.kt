@@ -13,10 +13,10 @@
  *
  * You may elect to redistribute this code under either of these licenses.
  */
-package io.vertx.kotlin.ext.neo4j
+package io.reactiverse.kotlin.neo4j
 
+import io.reactiverse.neo4j.Neo4jRecordStream
 import io.vertx.core.streams.WriteStream
-import io.vertx.ext.neo4j.Neo4jRecordStream
 import io.vertx.kotlin.coroutines.awaitResult
 import org.neo4j.driver.Record
 

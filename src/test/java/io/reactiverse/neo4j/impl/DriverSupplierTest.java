@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.vertx.ext.neo4j.impl;
+package io.reactiverse.neo4j.impl;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -29,7 +29,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.net.URI;
 
-import static io.vertx.ext.neo4j.impl.DriverSupplier.*;
+import static io.reactiverse.neo4j.impl.DriverSupplier.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;

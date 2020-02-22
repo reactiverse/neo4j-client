@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package io.vertx.ext.neo4j.impl;
+package io.reactiverse.neo4j.impl;
 
+import io.reactiverse.neo4j.Neo4jClient;
+import io.reactiverse.neo4j.Neo4jRecordStream;
+import io.reactiverse.neo4j.Neo4jTransaction;
+import io.reactiverse.neo4j.VisibleForTesting;
 import io.vertx.core.*;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.shareddata.LocalMap;
 import io.vertx.core.shareddata.Shareable;
-import io.vertx.ext.neo4j.Neo4jClient;
-import io.vertx.ext.neo4j.Neo4jRecordStream;
-import io.vertx.ext.neo4j.Neo4jTransaction;
-import io.vertx.ext.neo4j.VisibleForTesting;
 import org.neo4j.driver.*;
 import org.neo4j.driver.async.AsyncSession;
 import org.neo4j.driver.async.ResultCursor;
@@ -195,7 +195,8 @@ public class Neo4jClientImpl implements Neo4jClient {
         };
     }
 
-    @VisibleForTesting static final BinaryOperator<SummaryCounters> AGGREGATE_COUNTERS = (summaryCounters, summaryCounters2) -> new InternalSummaryCounters(
+    @VisibleForTesting
+    static final BinaryOperator<SummaryCounters> AGGREGATE_COUNTERS = (summaryCounters, summaryCounters2) -> new InternalSummaryCounters(
             summaryCounters.nodesCreated() + summaryCounters2.nodesCreated(),
             summaryCounters.nodesDeleted() + summaryCounters2.nodesDeleted(),
             summaryCounters.relationshipsCreated() + summaryCounters2.relationshipsCreated(),

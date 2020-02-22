@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package io.vertx.ext.neo4j.impl;
+package io.reactiverse.neo4j.impl;
 
+import io.reactiverse.neo4j.Neo4jTransaction;
 import io.vertx.core.*;
-import io.vertx.ext.neo4j.Neo4jTransaction;
 import org.neo4j.driver.Query;
 import org.neo4j.driver.Record;
 import org.neo4j.driver.Value;

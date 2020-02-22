@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package io.vertx.ext.neo4j.impl;
+package io.reactiverse.neo4j.impl;
 
+import io.reactiverse.neo4j.Neo4jRecordStream;
+import io.reactiverse.neo4j.ResultCursor;
 import io.vertx.core.Context;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.streams.impl.InboundBuffer;
-import io.vertx.ext.neo4j.Neo4jRecordStream;
-import io.vertx.ext.neo4j.ResultCursor;
 import org.neo4j.driver.Record;
 import org.neo4j.driver.async.AsyncSession;
 import org.neo4j.driver.async.AsyncTransaction;
