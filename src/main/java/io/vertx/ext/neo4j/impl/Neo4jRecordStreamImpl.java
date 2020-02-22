@@ -21,9 +21,10 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.streams.impl.InboundBuffer;
 import io.vertx.ext.neo4j.Neo4jRecordStream;
-import io.vertx.ext.neo4j.StatementResultCursor;
-import org.neo4j.driver.v1.Record;
-import org.neo4j.driver.v1.Session;
+import io.vertx.ext.neo4j.ResultCursor;
+import org.neo4j.driver.Record;
+import org.neo4j.driver.async.AsyncSession;
+import org.neo4j.driver.async.AsyncTransaction;
 
 public class Neo4jRecordStreamImpl implements Neo4jRecordStream {
 
@@ -32,8 +33,9 @@ public class Neo4jRecordStreamImpl implements Neo4jRecordStream {
     }
 
     private final Context context;
-    private final Session session;
-    private final StatementResultCursor cursor;
+    private final AsyncTransaction tx;
+    private final AsyncSession session;
+    private final ResultCursor cursor;
     private final InboundBuffer<Record> internalQueue;
 
     private State state;
@@ -42,8 +44,9 @@ public class Neo4jRecordStreamImpl implements Neo4jRecordStream {
     private Handler<Throwable> exceptionHandler;
     private Handler<Void> endHandler;
 
-    public Neo4jRecordStreamImpl(Context context, Session session, StatementResultCursor cursor) {
+    public Neo4jRecordStreamImpl(Context context, AsyncTransaction tx, AsyncSession session, ResultCursor cursor) {
         this.context = context;
+        this.tx = tx;
         this.session = session;
         this.cursor = cursor;
         internalQueue = new InboundBuffer<Record>(context)
@@ -195,6 +198,6 @@ public class Neo4jRecordStreamImpl implements Neo4jRecordStream {
     private synchronized void stop() {
         state = State.STOPPED;
         internalQueue.handler(null).drainHandler(null);
-        session.closeAsync();
+        tx.commitAsync().thenCompose(ignore -> session.closeAsync());
     }
 }

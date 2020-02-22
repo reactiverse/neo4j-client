@@ -18,7 +18,7 @@ package io.vertx.kotlin.ext.neo4j
 import io.vertx.core.streams.WriteStream
 import io.vertx.ext.neo4j.Neo4jRecordStream
 import io.vertx.kotlin.coroutines.awaitResult
-import org.neo4j.driver.v1.Record
+import org.neo4j.driver.Record
 
 suspend fun Neo4jRecordStream.pipeToAwait(dst: WriteStream<Record>): Unit {
   return awaitResult {

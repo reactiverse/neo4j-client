@@ -24,11 +24,11 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.neo4j.impl.Neo4jClientImpl;
-import org.neo4j.driver.v1.Record;
-import org.neo4j.driver.v1.Statement;
-import org.neo4j.driver.v1.Value;
-import org.neo4j.driver.v1.summary.ResultSummary;
-import org.neo4j.driver.v1.summary.SummaryCounters;
+import org.neo4j.driver.Query;
+import org.neo4j.driver.Record;
+import org.neo4j.driver.Value;
+import org.neo4j.driver.summary.ResultSummary;
+import org.neo4j.driver.summary.SummaryCounters;
 
 import java.util.List;
 import java.util.UUID;
@@ -135,9 +135,16 @@ public interface Neo4jClient {
     @Fluent
     Neo4jClient find(String query, Value parameters, Handler<AsyncResult<List<Record>>> resultHandler);
 
+    /**
+     * Executes a list of queries in one transaction
+     *
+     * @param queries  the list of queries to execute
+     * @param resultHandler  the handler to be called when the query has completed
+     * @return the current Neo4jClient instance
+     */
     @GenIgnore(GenIgnore.PERMITTED_TYPE)
     @Fluent
-    Neo4jClient bulkWrite(List<Statement> statements, Handler<AsyncResult<SummaryCounters>> resultHandler);
+    Neo4jClient bulkWrite(List<Query> queries, Handler<AsyncResult<SummaryCounters>> resultHandler);
 
     /**
      * Begins a new transaction

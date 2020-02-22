@@ -18,8 +18,13 @@ package io.vertx.ext.neo4j.impl;
 
 import io.vertx.core.*;
 import io.vertx.ext.neo4j.Neo4jTransaction;
-import org.neo4j.driver.v1.*;
-import org.neo4j.driver.v1.summary.ResultSummary;
+import org.neo4j.driver.Query;
+import org.neo4j.driver.Record;
+import org.neo4j.driver.Value;
+import org.neo4j.driver.async.AsyncSession;
+import org.neo4j.driver.async.AsyncTransaction;
+import org.neo4j.driver.async.ResultCursor;
+import org.neo4j.driver.summary.ResultSummary;
 
 import java.util.List;
 import java.util.Optional;
@@ -30,10 +35,10 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 public class Neo4jTransactionImpl implements Neo4jTransaction {
 
     private final Vertx vertx;
-    private final Transaction tx;
-    private final Session session;
+    private final AsyncTransaction tx;
+    private final AsyncSession session;
 
-    public Neo4jTransactionImpl(Vertx vertx, Transaction tx, Session session) {
+    public Neo4jTransactionImpl(Vertx vertx, AsyncTransaction tx, AsyncSession session) {
         this.vertx = vertx;
         this.tx = tx;
         this.session = session;
@@ -46,13 +51,13 @@ public class Neo4jTransactionImpl implements Neo4jTransaction {
     }
 
     @Override
-    public Neo4jTransaction query(Statement statement, Handler<AsyncResult<ResultSummary>> resultHandler) {
+    public Neo4jTransaction query(Query statement, Handler<AsyncResult<ResultSummary>> resultHandler) {
         doQuery(tx.runAsync(statement), resultHandler);
         return this;
     }
 
     @Override
-    public Neo4jTransaction readQuery(Statement statement, Handler<AsyncResult<List<Record>>> resultHandler) {
+    public Neo4jTransaction readQuery(Query statement, Handler<AsyncResult<List<Record>>> resultHandler) {
         doReadQuery(tx.runAsync(statement), resultHandler);
         return this;
     }
@@ -89,10 +94,10 @@ public class Neo4jTransactionImpl implements Neo4jTransaction {
         return this;
     }
 
-    private CompletionStage<Void> doQuery(CompletionStage<StatementResultCursor> executeQuery, Handler<AsyncResult<ResultSummary>> resultHandler) {
+    private CompletionStage<Void> doQuery(CompletionStage<ResultCursor> executeQuery, Handler<AsyncResult<ResultSummary>> resultHandler) {
         Context context = vertx.getOrCreateContext();
         return executeQuery
-                .thenCompose(StatementResultCursor::summaryAsync)
+                .thenCompose(ResultCursor::consumeAsync)
                 .thenApply(summary -> {
                     context.runOnContext(v -> resultHandler.handle(Future.succeededFuture(summary)));
                     return false;
@@ -101,13 +106,13 @@ public class Neo4jTransactionImpl implements Neo4jTransaction {
                     context.runOnContext(v -> resultHandler.handle(Future.failedFuture(Optional.ofNullable(error.getCause()).orElse(error)))); // cause of completion exception or itself
                     return true;
                 })
-                .thenCompose(rollback -> rollback ? tx.rollbackAsync().thenCompose(ignore -> session.closeAsync()) : completedFuture(null));
+                .thenCompose(ignore -> completedFuture(null));
     }
 
-    private CompletionStage<Void> doReadQuery(CompletionStage<StatementResultCursor> executeQuery, Handler<AsyncResult<List<Record>>> resultHandler) {
+    private CompletionStage<Void> doReadQuery(CompletionStage<ResultCursor> executeQuery, Handler<AsyncResult<List<Record>>> resultHandler) {
         Context context = vertx.getOrCreateContext();
         return executeQuery
-                .thenCompose(StatementResultCursor::listAsync)
+                .thenCompose(ResultCursor::listAsync)
                 .thenApply(records -> {
                     context.runOnContext(v -> resultHandler.handle(Future.succeededFuture(records)));
                     return false;

@@ -21,10 +21,10 @@ import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
-import org.neo4j.driver.v1.Record;
-import org.neo4j.driver.v1.Statement;
-import org.neo4j.driver.v1.Value;
-import org.neo4j.driver.v1.summary.ResultSummary;
+import org.neo4j.driver.Query;
+import org.neo4j.driver.Record;
+import org.neo4j.driver.Value;
+import org.neo4j.driver.summary.ResultSummary;
 
 import java.util.List;
 
@@ -50,24 +50,24 @@ public interface Neo4jTransaction {
     /**
      * Executes a query in a transaction
      *
-     * @param statement  the cypher statement
+     * @param query  the cypher statement
      * @param resultHandler  the handler to be called when the query has completed
      * @return the current Neo4jTransaction instance
      */
     @GenIgnore(GenIgnore.PERMITTED_TYPE)
     @Fluent
-    Neo4jTransaction query(Statement statement, Handler<AsyncResult<ResultSummary>> resultHandler);
+    Neo4jTransaction query(Query query, Handler<AsyncResult<ResultSummary>> resultHandler);
 
     /**
      * Executes a read query in a transaction
      *
-     * @param statement  the cypher statement
+     * @param query  the cypher statement
      * @param resultHandler  the handler to be called when the query has completed
      * @return the current Neo4jTransaction instance
      */
     @GenIgnore(GenIgnore.PERMITTED_TYPE)
     @Fluent
-    Neo4jTransaction readQuery(Statement statement, Handler<AsyncResult<List<Record>>> resultHandler);
+    Neo4jTransaction readQuery(Query query, Handler<AsyncResult<List<Record>>> resultHandler);
 
     /**
      * Commits the transaction

@@ -24,10 +24,12 @@ import io.vertx.ext.neo4j.Neo4jClient;
 import io.vertx.ext.neo4j.Neo4jRecordStream;
 import io.vertx.ext.neo4j.Neo4jTransaction;
 import io.vertx.ext.neo4j.VisibleForTesting;
+import org.neo4j.driver.*;
+import org.neo4j.driver.async.AsyncSession;
+import org.neo4j.driver.async.ResultCursor;
 import org.neo4j.driver.internal.summary.InternalSummaryCounters;
-import org.neo4j.driver.v1.*;
-import org.neo4j.driver.v1.summary.ResultSummary;
-import org.neo4j.driver.v1.summary.SummaryCounters;
+import org.neo4j.driver.summary.ResultSummary;
+import org.neo4j.driver.summary.SummaryCounters;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -37,13 +39,15 @@ import java.util.function.BinaryOperator;
 import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
+import static org.neo4j.driver.AccessMode.READ;
+import static org.neo4j.driver.AccessMode.WRITE;
 import static org.neo4j.driver.internal.summary.InternalSummaryCounters.EMPTY_STATS;
-import static org.neo4j.driver.v1.AccessMode.READ;
-import static org.neo4j.driver.v1.AccessMode.WRITE;
 
 public class Neo4jClientImpl implements Neo4jClient {
 
     private static final String NEO4J_CLIENT_MAP_NAME = "__vertx.Neo4jClient.datasources";
+    private static final SessionConfig DEFAULT_WRITE_SESSION_CONFIG = SessionConfig.builder().withDefaultAccessMode(WRITE).build();
+    private static final SessionConfig DEFAULT_READ_SESSION_CONFIG = SessionConfig.builder().withDefaultAccessMode(READ).build();
 
     private final Vertx vertx;
 
@@ -100,14 +104,14 @@ public class Neo4jClientImpl implements Neo4jClient {
     }
 
     @Override
-    public Neo4jClient bulkWrite(List<Statement> statements, Handler<AsyncResult<SummaryCounters>> resultHandler) {
-        Session session = driver.session(WRITE);
+    public Neo4jClient bulkWrite(List<Query> queries, Handler<AsyncResult<SummaryCounters>> resultHandler) {
+        AsyncSession session = driver.asyncSession(DEFAULT_WRITE_SESSION_CONFIG);
         session.writeTransactionAsync(tx -> {
             CompletionStage<SummaryCounters> stage = CompletableFuture.completedFuture(EMPTY_STATS);
 
-            for (Statement query : statements) {
+            for (Query query : queries) {
                 stage = stage.thenCompose(previousCounter -> tx.runAsync(query)
-                        .thenCompose(StatementResultCursor::summaryAsync)
+                        .thenCompose(ResultCursor::consumeAsync)
                         .thenApply(ResultSummary::counters)
                         .thenApply(nextCounter -> AGGREGATE_COUNTERS.apply(previousCounter, nextCounter)));
             }
@@ -121,7 +125,7 @@ public class Neo4jClientImpl implements Neo4jClient {
 
     @Override
     public Neo4jClient begin(Handler<AsyncResult<Neo4jTransaction>> resultHandler) {
-        Session session = driver.session(WRITE);
+        AsyncSession session = driver.asyncSession(DEFAULT_WRITE_SESSION_CONFIG);
         Context context = vertx.getOrCreateContext();
         session.beginTransactionAsync().thenAccept(tx -> {
             context.runOnContext(v -> resultHandler.handle(Future.succeededFuture(new Neo4jTransactionImpl(vertx, tx, session))));
@@ -140,38 +144,40 @@ public class Neo4jClientImpl implements Neo4jClient {
 
     @Override
     public Neo4jClient queryStream(String query, Value parameters, Handler<AsyncResult<Neo4jRecordStream>> recordStreamHandler) {
-        Session session = driver.session(READ);
+        AsyncSession session = driver.asyncSession(DEFAULT_READ_SESSION_CONFIG);
         Context context = vertx.getOrCreateContext();
-        session.readTransactionAsync(tx -> tx.runAsync(query, parameters)).thenAccept(cursor -> {
-            context.runOnContext(v -> recordStreamHandler.handle(Future.succeededFuture(new Neo4jRecordStreamImpl(context, session, new StatementResultCursorImpl(cursor, vertx)))));
-        }).exceptionally(error -> {
+        session.beginTransactionAsync().thenAccept(tx -> tx.runAsync(query, parameters).thenAccept(cursor -> {
+            context.runOnContext(v -> recordStreamHandler.handle(Future.succeededFuture(new Neo4jRecordStreamImpl(context, tx, session, new ResultCursorImpl(cursor, vertx)))));
+        }))
+        .exceptionally(error -> {
             context.runOnContext(v -> recordStreamHandler.handle(Future.failedFuture(error)));
             session.closeAsync();
             return null;
         });
         return this;
+
     }
 
     private void executeWriteTransaction(String query, Value parameters, Handler<AsyncResult<ResultSummary>> resultHandler) {
-        Session session = driver.session(WRITE);
+        AsyncSession session = driver.asyncSession(DEFAULT_WRITE_SESSION_CONFIG);
         session.writeTransactionAsync(tx -> tx.runAsync(query, parameters)
-                .thenCompose(StatementResultCursor::summaryAsync))
+                .thenCompose(ResultCursor::consumeAsync))
                 .whenComplete(wrapCallback(resultHandler))
                 .thenCompose(ignore -> session.closeAsync());
     }
 
     private void executeReadTransaction(String query, Value parameters, Handler<AsyncResult<List<Record>>> resultHandler) {
-        Session session = driver.session(READ);
+        AsyncSession session = driver.asyncSession(DEFAULT_READ_SESSION_CONFIG);
         session.readTransactionAsync(tx -> tx.runAsync(query, parameters)
-                .thenCompose(StatementResultCursor::listAsync))
+                .thenCompose(ResultCursor::listAsync))
                 .whenComplete(wrapCallback(resultHandler))
                 .thenCompose(ignore -> session.closeAsync());
     }
 
     private void executeReadTransactionSingle(String query, Value parameters, Handler<AsyncResult<Record>> resultHandler) {
-        Session session = driver.session(READ);
+        AsyncSession session = driver.asyncSession(DEFAULT_READ_SESSION_CONFIG);
         session.readTransactionAsync(tx -> tx.runAsync(query, parameters)
-                .thenCompose(StatementResultCursor::singleAsync))
+                .thenCompose(ResultCursor::singleAsync))
                 .whenComplete(wrapCallback(resultHandler))
                 .thenCompose(ignore -> session.closeAsync());
     }
@@ -200,7 +206,8 @@ public class Neo4jClientImpl implements Neo4jClient {
             summaryCounters.indexesAdded() + summaryCounters2.indexesAdded(),
             summaryCounters.indexesRemoved() + summaryCounters2.indexesRemoved(),
             summaryCounters.constraintsAdded() + summaryCounters2.constraintsAdded(),
-            summaryCounters.constraintsRemoved() + summaryCounters2.constraintsRemoved()
+            summaryCounters.constraintsRemoved() + summaryCounters2.constraintsRemoved(),
+            summaryCounters.systemUpdates() + summaryCounters2.systemUpdates()
     );
 
     @Override

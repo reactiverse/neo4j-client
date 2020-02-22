@@ -19,19 +19,21 @@ package io.vertx.ext.neo4j.impl;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.neo4j.VisibleForTesting;
-import org.neo4j.driver.v1.*;
+import org.neo4j.driver.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
+import static org.neo4j.driver.internal.async.pool.PoolSettings.DEFAULT_CONNECTION_ACQUISITION_TIMEOUT;
 import static org.neo4j.driver.internal.async.pool.PoolSettings.DEFAULT_MAX_CONNECTION_POOL_SIZE;
-import static org.neo4j.driver.v1.Config.LoadBalancingStrategy;
+import static org.neo4j.driver.internal.handlers.pulln.FetchSizeUtil.DEFAULT_FETCH_SIZE;
 
 public class DriverSupplier implements Supplier<Driver> {
 
@@ -42,8 +44,13 @@ public class DriverSupplier implements Supplier<Driver> {
     public static final String USERNAME_CONFIG_PARAM = "username";
     public static final String PASSWORD_CONFIG_PARAM = "password";
     public static final String MAX_CONNECTION_POOL_SIZE_CONFIG_PARAM = "maxConnectionPoolSize";
-    public static final String LOAD_BALANCING_STRATEGY_CONFIG_PARAM = "loadBalancingStrategy";
+    public static final String CONNECTION_ACQUISITION_TIMEOUT_PARAM = "connectionAcquisitionTimeout";
+    public static final String NUMBER_OF_EVENT_LOOP_THREADS_PARAM = "numberOfEventLoopThreads";
+    public static final String LOG_LEAKED_SESSIONS = "logLeakedSessions";
     public static final String SINGLE_NODE_URL_CONFIG_PARAM = "url";
+    public static final String FETCH_SIZE = "fetchSize";
+    public static final boolean DEFAULT_LOG_LEAKED_SESSIONS = true;
+    public static final int DEFAULT_NUMBER_OF_EVENT_LOOP_THREADS = 2 * Runtime.getRuntime().availableProcessors();
 
     private final JsonObject config;
 
@@ -70,21 +77,51 @@ public class DriverSupplier implements Supplier<Driver> {
     @VisibleForTesting Driver singleNodeDriver(String singleNodeURL, String username, String password) {
         if (noAuth()) {
             LOG.warn("Provided Neo4j config without credentials : should be acceptable in TEST mode only");
-            return GraphDatabase.driver(TO_URI.apply(singleNodeURL), Config.build().withLogging(Logging.slf4j()).toConfig());
+            return GraphDatabase.driver(TO_URI.apply(singleNodeURL), Config.builder().withLogging(Logging.slf4j()).withLeakedSessionsLogging().build());
         }
 
-        return GraphDatabase.driver(TO_URI.apply(singleNodeURL), AuthTokens.basic(username, password), Config.build()
-                .withMaxConnectionPoolSize(config.getInteger(MAX_CONNECTION_POOL_SIZE_CONFIG_PARAM, DEFAULT_MAX_CONNECTION_POOL_SIZE))
-                .withLogging(Logging.slf4j())
-                .toConfig());
+        return GraphDatabase.driver(TO_URI.apply(singleNodeURL), AuthTokens.basic(username, password), buildConfig());
     }
 
     @VisibleForTesting Driver clusterNodeDriver(JsonArray clusterNodeURIs, String username, String password) {
-        return GraphDatabase.routingDriver(clusterNodeURIs.stream().map(TO_URI).collect(toList()), AuthTokens.basic(username, password), Config.build()
-                .withMaxConnectionPoolSize(config.getInteger(MAX_CONNECTION_POOL_SIZE_CONFIG_PARAM, DEFAULT_MAX_CONNECTION_POOL_SIZE))
-                .withLoadBalancingStrategy(Config.LoadBalancingStrategy.valueOf(config.getString(LOAD_BALANCING_STRATEGY_CONFIG_PARAM, LoadBalancingStrategy.LEAST_CONNECTED.toString())))
-                .withLogging(Logging.slf4j())
-                .toConfig());
+        return GraphDatabase.routingDriver(clusterNodeURIs.stream().map(TO_URI).collect(toList()), AuthTokens.basic(username, password), buildConfig());
+    }
+
+    private Config buildConfig() {
+        Integer maxConnectionPoolSize = config.getInteger(MAX_CONNECTION_POOL_SIZE_CONFIG_PARAM, DEFAULT_MAX_CONNECTION_POOL_SIZE);
+        Long connectionAcquisitionTimeout = config.getLong(CONNECTION_ACQUISITION_TIMEOUT_PARAM, DEFAULT_CONNECTION_ACQUISITION_TIMEOUT);
+        Integer numberOfEventLoopThreads = config.getInteger(NUMBER_OF_EVENT_LOOP_THREADS_PARAM, DEFAULT_NUMBER_OF_EVENT_LOOP_THREADS);
+        Boolean shouldLogLeakedSessions = config.getBoolean(LOG_LEAKED_SESSIONS, DEFAULT_LOG_LEAKED_SESSIONS);
+        Long fetchSize = config.getLong(FETCH_SIZE, DEFAULT_FETCH_SIZE);
+
+        LOG.info(
+                "Driver initialized with " +
+                        "maxConnectionPoolSize {}, " +
+                        "connectionAcquisitionTimeout {} ms, " +
+                        "numberOfEventLoopThreads {}, " +
+                        "logLeakedSessions {}, " +
+                        "fetchSize {}",
+                maxConnectionPoolSize,
+                connectionAcquisitionTimeout,
+                numberOfEventLoopThreads,
+                shouldLogLeakedSessions,
+                fetchSize
+        );
+
+        Config.ConfigBuilder configBuilder = Config.builder()
+                .withMaxConnectionPoolSize(maxConnectionPoolSize)
+                .withConnectionAcquisitionTimeout(connectionAcquisitionTimeout, TimeUnit.MILLISECONDS)
+                .withEventLoopThreads(numberOfEventLoopThreads)
+                .withFetchSize(fetchSize)
+                .withEncryption()
+                .withTrustStrategy(Config.TrustStrategy.trustAllCertificates().withoutHostnameVerification())
+                .withLogging(Logging.slf4j());
+
+        if (shouldLogLeakedSessions) {
+            configBuilder.withLeakedSessionsLogging();
+        }
+
+        return configBuilder.build();
     }
 
     private boolean isClusterMode() {

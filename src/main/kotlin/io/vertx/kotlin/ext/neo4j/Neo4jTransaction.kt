@@ -17,10 +17,10 @@ package io.vertx.kotlin.ext.neo4j
 
 import io.vertx.ext.neo4j.Neo4jTransaction
 import io.vertx.kotlin.coroutines.awaitResult
-import org.neo4j.driver.v1.Record
-import org.neo4j.driver.v1.Statement
-import org.neo4j.driver.v1.Value
-import org.neo4j.driver.v1.summary.ResultSummary
+import org.neo4j.driver.Query
+import org.neo4j.driver.Record
+import org.neo4j.driver.Value
+import org.neo4j.driver.summary.ResultSummary
 
 /**
  * Suspending version of method [io.vertx.ext.neo4j.Neo4jTransaction.commit]
@@ -64,28 +64,28 @@ suspend fun Neo4jTransaction.queryAwait(query: String, parameters: Value): Resul
 /**
  * Suspending version of method [io.vertx.ext.neo4j.Neo4jTransaction.query]
  *
- * @param statement the cypher statement
+ * @param query the cypher statement
  * @return [ResultSummary]
  *
  * NOTE: This function has been automatically generated from [io.vertx.ext.neo4j.Neo4jTransaction] using Vert.x codegen.
  */
-suspend fun Neo4jTransaction.queryAwait(statement: Statement): ResultSummary {
+suspend fun Neo4jTransaction.queryAwait(query: Query): ResultSummary {
   return awaitResult {
-    this.query(statement, it)
+    this.query(query, it)
   }
 }
 
 /**
  * Suspending version of method [io.vertx.ext.neo4j.Neo4jTransaction.readQuery]
  *
- * @param statement the cypher statement
+ * @param query the cypher statement
  * @return [List<Record>]
  *
  * NOTE: This function has been automatically generated from [io.vertx.ext.neo4j.Neo4jTransaction] using Vert.x codegen.
  */
-suspend fun Neo4jTransaction.readQueryAwait(statement: Statement): List<Record> {
+suspend fun Neo4jTransaction.readQueryAwait(query: Query): List<Record> {
   return awaitResult {
-    this.readQuery(statement, it)
+    this.readQuery(query, it)
   }
 }
 

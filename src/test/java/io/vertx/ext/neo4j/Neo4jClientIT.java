@@ -25,13 +25,13 @@ import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.*;
 import org.junit.runner.RunWith;
-import org.neo4j.driver.v1.Record;
-import org.neo4j.driver.v1.Statement;
-import org.neo4j.driver.v1.exceptions.ClientException;
-import org.neo4j.driver.v1.exceptions.NoSuchRecordException;
-import org.neo4j.driver.v1.summary.ResultSummary;
-import org.neo4j.driver.v1.summary.SummaryCounters;
-import org.neo4j.harness.junit.Neo4jRule;
+import org.neo4j.driver.Query;
+import org.neo4j.driver.Record;
+import org.neo4j.driver.exceptions.ClientException;
+import org.neo4j.driver.exceptions.NoSuchRecordException;
+import org.neo4j.driver.summary.ResultSummary;
+import org.neo4j.driver.summary.SummaryCounters;
+import org.neo4j.harness.junit.rule.Neo4jRule;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
 import static io.vertx.core.logging.LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.assertj.core.util.Lists.newArrayList;
-import static org.neo4j.driver.v1.Values.parameters;
+import static org.neo4j.driver.Values.parameters;
 
 @RunWith(VertxUnitRunner.class)
 public class Neo4jClientIT {
@@ -73,7 +73,7 @@ public class Neo4jClientIT {
     Neo4jClient neo4jClient;
 
     @Rule
-    public Neo4jRule neo4j = new Neo4jRule();
+    public Neo4jRule neo4j = new Neo4jRule().withDisabledServer();
 
     @BeforeClass
     public static void prepareAll() {
@@ -244,10 +244,10 @@ public class Neo4jClientIT {
 
     @Test public void should_check_counter_after_bulk_write(TestContext testContext) {
         Async async = testContext.async();
-        List<Statement> queries = new ArrayList<>(3);
-        queries.add(new Statement("CREATE (:Company {name: {name}})", parameters("name", "Wayne Enterprises")));
-        queries.add(new Statement("CREATE (:Person {name: {name}})", parameters("name", "Alice")));
-        queries.add(new Statement("MATCH (person:Person {name: {employee}}) MATCH (company:Company {name: {company}}) CREATE (person)-[:WORKS_FOR]->(company)", parameters("employee", "Alice", "company", "Wayne Enterprises")));
+        List<Query> queries = new ArrayList<>(3);
+        queries.add(new Query("CREATE (:Company {name: $name})", parameters("name", "Wayne Enterprises")));
+        queries.add(new Query("CREATE (:Person {name: $name})", parameters("name", "Alice")));
+        queries.add(new Query("MATCH (person:Person {name: $employee}) MATCH (company:Company {name: $company}) CREATE (person)-[:WORKS_FOR]->(company)", parameters("employee", "Alice", "company", "Wayne Enterprises")));
         Promise<SummaryCounters> createPersons = Promise.promise();
         neo4jClient.bulkWrite(queries, createPersons);
         createPersons.future().setHandler(foundNodes -> {
@@ -263,10 +263,10 @@ public class Neo4jClientIT {
 
     @Test public void should_check_transaction_has_been_committed_after_bulk_write(TestContext testContext) {
         Async async = testContext.async();
-        List<Statement> queries = new ArrayList<>(3);
-        queries.add(new Statement("CREATE (:Company {name: {name}})", parameters("name", "Wayne Enterprises")));
-        queries.add(new Statement("CREATE (:Person {name: {name}})", parameters("name", "Alice")));
-        queries.add(new Statement("MATCH (person:Person {name: {employee}}) MATCH (company:Company {name: {company}}) CREATE (person)-[:WORKS_FOR]->(company)", parameters("employee", "Alice", "company", "Wayne Enterprises")));
+        List<Query> queries = new ArrayList<>(3);
+        queries.add(new Query("CREATE (:Company {name: $name})", parameters("name", "Wayne Enterprises")));
+        queries.add(new Query("CREATE (:Person {name: $name})", parameters("name", "Alice")));
+        queries.add(new Query("MATCH (person:Person {name: $employee}) MATCH (company:Company {name: $company}) CREATE (person)-[:WORKS_FOR]->(company)", parameters("employee", "Alice", "company", "Wayne Enterprises")));
         Promise<SummaryCounters> createPersons = Promise.promise();
         neo4jClient.bulkWrite(queries, createPersons);
         createPersons.future().compose(bulkDone -> {
@@ -289,14 +289,14 @@ public class Neo4jClientIT {
         neo4jClient.begin(transactionFuture);
         transactionFuture.future().compose(tx -> {
             Promise<ResultSummary> firstSummaryFuture = Promise.promise();
-            tx.query("CREATE (:Company {name: {name}})", parameters("name", "Wayne Enterprises"), firstSummaryFuture);
+            tx.query("CREATE (:Company {name: $name})", parameters("name", "Wayne Enterprises"), firstSummaryFuture);
             return firstSummaryFuture.future().compose(resultSummary -> {
                 Promise<ResultSummary> secondSummaryFuture = Promise.promise();
-                tx.query("CREATE (:Person {name: {name}})", parameters("name", "Alice"), secondSummaryFuture);
+                tx.query("CREATE (:Person {name: $name})", parameters("name", "Alice"), secondSummaryFuture);
                 return secondSummaryFuture.future();
             }).compose(resultSummary -> {
                 Promise<ResultSummary> thirdSummaryFuture = Promise.promise();
-                tx.query("MATCH (person:Person {name: {employee}}) MATCH (company:Company {name: {company}}) CREATE (person)-[:WORKS_FOR]->(company)", parameters("employee", "Alice", "company", "Wayne Enterprises"), thirdSummaryFuture);
+                tx.query("MATCH (person:Person {name: $employee}) MATCH (company:Company {name: $company}) CREATE (person)-[:WORKS_FOR]->(company)", parameters("employee", "Alice", "company", "Wayne Enterprises"), thirdSummaryFuture);
                 return thirdSummaryFuture.future();
             }).compose(end -> {
                 Promise<Void> commitFuture = Promise.promise();
@@ -317,21 +317,24 @@ public class Neo4jClientIT {
         });
     }
 
-    @Test public void should_check_transaction_has_been_rollbacked(TestContext testContext) {
-        Async async = testContext.async();
+    @Test public void should_check_transaction_is_not_committed(TestContext testContext) {
+        Async async = testContext.async(1);
         Promise<Neo4jTransaction> transactionFuture = Promise.promise();
         neo4jClient.begin(transactionFuture);
         transactionFuture.future().compose(tx -> {
             Promise<ResultSummary> firstSummaryFuture = Promise.promise();
-            tx.query("CREATE (:Company {name: {name}})", parameters("name", "Wayne Enterprises"), firstSummaryFuture);
+            tx.query("CREATE (:Company {name: $name})", parameters("name", "Wayne Enterprises"), firstSummaryFuture);
             return firstSummaryFuture.future().compose(resultSummary -> {
                 Promise<ResultSummary> secondSummaryFuture = Promise.promise();
-                tx.query("CREATE (:Person name: {name}})", parameters("name", "Alice"), secondSummaryFuture); // bad query
+                tx.query("CREATE (:Person name: $name})", parameters("name", "Alice"), secondSummaryFuture); // bad query
                 return secondSummaryFuture.future();
             }).compose(resultSummary -> {
                 Promise<Void> commitFuture = Promise.promise();
                 tx.commit(commitFuture);
                 return commitFuture.future();
+            }).onFailure(error -> {
+                Promise<Void> rollbackFuture = Promise.promise();
+                tx.rollback(rollbackFuture);
             });
         }).setHandler(commitTransaction -> {
             if (commitTransaction.succeeded()) {
@@ -339,7 +342,7 @@ public class Neo4jClientIT {
             } else {
                 testContext.assertTrue(commitTransaction.cause() instanceof ClientException);
                 Promise<Record> findRecordFuture = Promise.promise();
-                neo4jClient.findOne("MATCH (you:Company {name:{name}}) RETURN you", parameters("name", "Wayne Enterprises"), findRecordFuture);
+                neo4jClient.findOne("MATCH (you:Company {name:$name}) RETURN you", parameters("name", "Wayne Enterprises"), findRecordFuture);
                 findRecordFuture.future().setHandler(record -> {
                     if (record.failed()) {
                         testContext.assertTrue(record.cause() instanceof NoSuchRecordException);
@@ -394,11 +397,11 @@ public class Neo4jClientIT {
 
     private static final String CREATE_PERSON_QUERY = "CREATE (you:Person {name:'You'}) RETURN you";
 
-    private static final String CREATE_PERSON_QUERY_WITH_PARAM = "CREATE (you:Person {name:{name}}) RETURN you";
+    private static final String CREATE_PERSON_QUERY_WITH_PARAM = "CREATE (you:Person {name:$name}) RETURN you";
 
     private static final String FIND_PERSON_QUERY = "MATCH (you:Person {name:'You'}) RETURN you";
 
-    private static final String FIND_PERSON_QUERY_WITH_PARAM = "MATCH (you:Person {name:{name}}) RETURN you";
+    private static final String FIND_PERSON_QUERY_WITH_PARAM = "MATCH (you:Person {name:$name}) RETURN you";
 
     private static final String CREATE_FRIENDS_QUERY =
             "MATCH (you:Person {name:'You'})\n" +
@@ -407,9 +410,9 @@ public class Neo4jClientIT {
 
     private static final String FIND_FRIENDS_QUERY = "MATCH (you {name:'You'})-[:FRIEND]->(yourFriends) RETURN yourFriends";
 
-    private static final String FIND_FRIENDS_QUERY_WITH_PARAM = "MATCH (you {name:{name}})-[:FRIEND]->(yourFriends) RETURN yourFriends";
+    private static final String FIND_FRIENDS_QUERY_WITH_PARAM = "MATCH (you {name:$name})-[:FRIEND]->(yourFriends) RETURN yourFriends";
 
     private static final String DELETE_PERSON_QUERY = "MATCH (you:Person {name:'You'}) DELETE you";
 
-    private static final String DELETE_PERSON_QUERY_WITH_PARAM = "MATCH (you:Person {name:{name}}) DELETE you";
+    private static final String DELETE_PERSON_QUERY_WITH_PARAM = "MATCH (you:Person {name:$name}) DELETE you";
 }

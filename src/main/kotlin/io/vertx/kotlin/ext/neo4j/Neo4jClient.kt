@@ -19,11 +19,11 @@ import io.vertx.ext.neo4j.Neo4jClient
 import io.vertx.ext.neo4j.Neo4jRecordStream
 import io.vertx.ext.neo4j.Neo4jTransaction
 import io.vertx.kotlin.coroutines.awaitResult
-import org.neo4j.driver.v1.Record
-import org.neo4j.driver.v1.Statement
-import org.neo4j.driver.v1.Value
-import org.neo4j.driver.v1.summary.ResultSummary
-import org.neo4j.driver.v1.summary.SummaryCounters
+import org.neo4j.driver.Query
+import org.neo4j.driver.Record
+import org.neo4j.driver.Value
+import org.neo4j.driver.summary.ResultSummary
+import org.neo4j.driver.summary.SummaryCounters
 
 /**
  * Suspending version of method [io.vertx.ext.neo4j.Neo4jClient.begin]
@@ -139,9 +139,17 @@ suspend fun Neo4jClient.findAwait(query: String, parameters: Value): List<Record
   }
 }
 
-suspend fun Neo4jClient.bulkWriteAwait(statements: List<Statement>): SummaryCounters {
+/**
+ * Suspending version of method [io.vertx.ext.neo4j.Neo4jClient.bulkWrite]
+ *
+ * @param queries the list of queries to execute
+ * @return [SummaryCounters]
+ *
+ * NOTE: This function has been automatically generated from [io.vertx.ext.neo4j.Neo4jClient] using Vert.x codegen.
+ */
+suspend fun Neo4jClient.bulkWriteAwait(queries: List<Query>): SummaryCounters {
   return awaitResult {
-    this.bulkWrite(statements, it)
+    this.bulkWrite(queries, it)
   }
 }
 

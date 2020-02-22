@@ -17,21 +17,21 @@
 package io.vertx.ext.neo4j.impl;
 
 import io.vertx.core.*;
-import org.neo4j.driver.v1.Record;
-import org.neo4j.driver.v1.StatementResultCursor;
+import org.neo4j.driver.Record;
+import org.neo4j.driver.async.ResultCursor;
 
-public class StatementResultCursorImpl implements io.vertx.ext.neo4j.StatementResultCursor {
+public class ResultCursorImpl implements io.vertx.ext.neo4j.ResultCursor {
 
-    private final StatementResultCursor cursor;
+    private final ResultCursor cursor;
     private final Vertx vertx;
 
-    public StatementResultCursorImpl(StatementResultCursor cursor, Vertx vertx) {
+    public ResultCursorImpl(ResultCursor cursor, Vertx vertx) {
         this.cursor = cursor;
         this.vertx = vertx;
     }
 
     @Override
-    public io.vertx.ext.neo4j.StatementResultCursor one(Handler<AsyncResult<Record>> handler) {
+    public io.vertx.ext.neo4j.ResultCursor one(Handler<AsyncResult<Record>> handler) {
         Context context = vertx.getOrCreateContext();
         cursor.nextAsync()
                 .thenAccept(record -> {

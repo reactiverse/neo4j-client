@@ -20,7 +20,7 @@ import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.Handler;
 import io.vertx.core.streams.ReadStream;
-import org.neo4j.driver.v1.Record;
+import org.neo4j.driver.Record;
 
 /**
  * A {@link ReadStream} for {@link Record} consumption.

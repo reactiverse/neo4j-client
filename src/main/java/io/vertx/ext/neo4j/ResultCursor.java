@@ -18,9 +18,9 @@ package io.vertx.ext.neo4j;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
-import org.neo4j.driver.v1.Record;
+import org.neo4j.driver.Record;
 
-public interface StatementResultCursor {
+public interface ResultCursor {
 
-    StatementResultCursor one(Handler<AsyncResult<Record>> handler);
+    ResultCursor one(Handler<AsyncResult<Record>> handler);
 }
