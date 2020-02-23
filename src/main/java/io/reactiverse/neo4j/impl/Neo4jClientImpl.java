@@ -118,8 +118,8 @@ public class Neo4jClientImpl implements Neo4jClient {
 
             return stage;
         })
-                .whenComplete(wrapCallback(resultHandler))
-                .thenCompose(ignore -> session.closeAsync());
+        .whenComplete(wrapCallback(resultHandler))
+        .thenCompose(ignore -> session.closeAsync());
         return this;
     }
 
