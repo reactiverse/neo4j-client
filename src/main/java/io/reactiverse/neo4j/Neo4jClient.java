@@ -21,6 +21,7 @@ import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
@@ -77,6 +78,9 @@ public interface Neo4jClient {
     @Fluent
     Neo4jClient execute(String query, Handler<AsyncResult<ResultSummary>> resultHandler);
 
+    @GenIgnore(GenIgnore.PERMITTED_TYPE)
+    Future<ResultSummary> execute(String query);
+
     /**
      * Executes a write transaction
      *
@@ -89,6 +93,9 @@ public interface Neo4jClient {
     @Fluent
     Neo4jClient execute(String query, Value parameters, Handler<AsyncResult<ResultSummary>> resultHandler);
 
+    @GenIgnore(GenIgnore.PERMITTED_TYPE)
+    Future<ResultSummary> execute(String query, Value parameters);
+
     /**
      * Finds exactly one record
      *
@@ -99,6 +106,9 @@ public interface Neo4jClient {
     @GenIgnore(GenIgnore.PERMITTED_TYPE)
     @Fluent
     Neo4jClient findOne(String query, Handler<AsyncResult<Record>> resultHandler);
+
+    @GenIgnore(GenIgnore.PERMITTED_TYPE)
+    Future<Record> findOne(String query);
 
     /**
      * Finds exactly one record
@@ -112,6 +122,9 @@ public interface Neo4jClient {
     @Fluent
     Neo4jClient findOne(String query, Value parameters, Handler<AsyncResult<Record>> resultHandler);
 
+    @GenIgnore(GenIgnore.PERMITTED_TYPE)
+    Future<Record> findOne(String query, Value parameters);
+
     /**
      * Finds a list of records
      *
@@ -122,6 +135,9 @@ public interface Neo4jClient {
     @GenIgnore(GenIgnore.PERMITTED_TYPE)
     @Fluent
     Neo4jClient find(String query, Handler<AsyncResult<List<Record>>> resultHandler);
+
+    @GenIgnore(GenIgnore.PERMITTED_TYPE)
+    Future<List<Record>> find(String query);
 
     /**
      * Finds a list of records
@@ -135,6 +151,9 @@ public interface Neo4jClient {
     @Fluent
     Neo4jClient find(String query, Value parameters, Handler<AsyncResult<List<Record>>> resultHandler);
 
+    @GenIgnore(GenIgnore.PERMITTED_TYPE)
+    Future<List<Record>> find(String query, Value parameters);
+
     /**
      * Executes a list of queries in one transaction
      *
@@ -146,6 +165,9 @@ public interface Neo4jClient {
     @Fluent
     Neo4jClient bulkWrite(List<Query> queries, Handler<AsyncResult<SummaryCounters>> resultHandler);
 
+    @GenIgnore(GenIgnore.PERMITTED_TYPE)
+    Future<SummaryCounters> bulkWrite(List<Query> queries);
+
     /**
      * Begins a new transaction
      *
@@ -154,6 +176,9 @@ public interface Neo4jClient {
      */
     @Fluent
     Neo4jClient begin(Handler<AsyncResult<Neo4jTransaction>> resultHandler);
+
+    @GenIgnore(GenIgnore.PERMITTED_TYPE)
+    Future<Neo4jTransaction> begin();
 
     /**
      * Opens a new stream of records
@@ -164,6 +189,9 @@ public interface Neo4jClient {
      */
     @Fluent
     Neo4jClient queryStream(String query, Handler<AsyncResult<Neo4jRecordStream>> recordStreamHandler);
+
+    @GenIgnore(GenIgnore.PERMITTED_TYPE)
+    Future<Neo4jRecordStream> queryStream(String query);
 
     /**
      * Opens a new stream of records
@@ -176,6 +204,9 @@ public interface Neo4jClient {
     @GenIgnore(GenIgnore.PERMITTED_TYPE)
     @Fluent
     Neo4jClient queryStream(String query, Value parameters, Handler<AsyncResult<Neo4jRecordStream>> recordStreamHandler);
+
+    @GenIgnore(GenIgnore.PERMITTED_TYPE)
+    Future<Neo4jRecordStream> queryStream(String query, Value parameters);
 
     /**
      * Closes this client

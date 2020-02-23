@@ -17,10 +17,13 @@
 package io.reactiverse.neo4j;
 
 import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import org.neo4j.driver.Record;
 
 public interface ResultCursor {
 
     ResultCursor one(Handler<AsyncResult<Record>> handler);
+
+    Future<Record> one();
 }

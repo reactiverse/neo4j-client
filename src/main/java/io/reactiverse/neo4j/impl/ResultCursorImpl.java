@@ -16,9 +16,14 @@
 
 package io.reactiverse.neo4j.impl;
 
-import io.vertx.core.*;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
 import org.neo4j.driver.Record;
 import org.neo4j.driver.async.ResultCursor;
+
+import static io.reactiverse.neo4j.Util.setHandler;
 
 public class ResultCursorImpl implements io.reactiverse.neo4j.ResultCursor {
 
@@ -32,15 +37,13 @@ public class ResultCursorImpl implements io.reactiverse.neo4j.ResultCursor {
 
     @Override
     public io.reactiverse.neo4j.ResultCursor one(Handler<AsyncResult<Record>> handler) {
-        Context context = vertx.getOrCreateContext();
-        cursor.nextAsync()
-                .thenAccept(record -> {
-                    context.runOnContext(v -> handler.handle(Future.succeededFuture(record)));
-                })
-                .exceptionally(error -> {
-                    context.runOnContext(v -> handler.handle(Future.failedFuture(error)));
-                    return null;
-                });
+        Future<Record> one = one();
+        setHandler(one, handler);
         return this;
+    }
+
+    @Override
+    public Future<Record> one() {
+        return Future.fromCompletionStage(cursor.nextAsync(), vertx.getOrCreateContext());
     }
 }

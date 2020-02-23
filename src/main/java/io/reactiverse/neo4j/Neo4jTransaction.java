@@ -20,6 +20,7 @@ import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import org.neo4j.driver.Query;
 import org.neo4j.driver.Record;
@@ -47,6 +48,9 @@ public interface Neo4jTransaction {
     @Fluent
     Neo4jTransaction query(String query, Value parameters, Handler<AsyncResult<ResultSummary>> resultHandler);
 
+    @GenIgnore(GenIgnore.PERMITTED_TYPE)
+    Future<ResultSummary> query(String query, Value parameters);
+
     /**
      * Executes a query in a transaction
      *
@@ -57,6 +61,9 @@ public interface Neo4jTransaction {
     @GenIgnore(GenIgnore.PERMITTED_TYPE)
     @Fluent
     Neo4jTransaction query(Query query, Handler<AsyncResult<ResultSummary>> resultHandler);
+
+    @GenIgnore(GenIgnore.PERMITTED_TYPE)
+    Future<ResultSummary> query(Query query);
 
     /**
      * Executes a read query in a transaction
@@ -69,6 +76,9 @@ public interface Neo4jTransaction {
     @Fluent
     Neo4jTransaction readQuery(Query query, Handler<AsyncResult<List<Record>>> resultHandler);
 
+    @GenIgnore(GenIgnore.PERMITTED_TYPE)
+    Future<List<Record>> readQuery(Query query);
+
     /**
      * Commits the transaction
      *
@@ -78,6 +88,8 @@ public interface Neo4jTransaction {
     @Fluent
     Neo4jTransaction commit(Handler<AsyncResult<Void>> resultHandler);
 
+    Future<Void> commit();
+
     /**
      * Rollbacks the transaction
      *
@@ -86,4 +98,6 @@ public interface Neo4jTransaction {
      */
     @Fluent
     Neo4jTransaction rollback(Handler<AsyncResult<Void>> resultHandler);
+
+    Future<Void> rollback();
 }

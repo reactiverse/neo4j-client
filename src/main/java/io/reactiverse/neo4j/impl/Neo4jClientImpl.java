@@ -34,10 +34,10 @@ import org.neo4j.driver.summary.SummaryCounters;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.function.BiConsumer;
 import java.util.function.BinaryOperator;
 import java.util.function.Supplier;
 
+import static io.reactiverse.neo4j.Util.setHandler;
 import static java.util.Objects.requireNonNull;
 import static org.neo4j.driver.AccessMode.READ;
 import static org.neo4j.driver.AccessMode.WRITE;
@@ -69,44 +69,86 @@ public class Neo4jClientImpl implements Neo4jClient {
 
     @Override
     public Neo4jClient execute(String query, Handler<AsyncResult<ResultSummary>> resultHandler) {
-        executeWriteTransaction(query, EMPTY, resultHandler);
+        Future<ResultSummary> resultSummaryFuture = execute(query);
+        setHandler(resultSummaryFuture, resultHandler);
         return this;
+    }
+
+    @Override
+    public Future<ResultSummary> execute(String query) {
+        return Future.fromCompletionStage(executeWriteTransaction(query, EMPTY), vertx.getOrCreateContext());
     }
 
     @Override
     public Neo4jClient execute(String query, Value parameters, Handler<AsyncResult<ResultSummary>> resultHandler) {
-        executeWriteTransaction(query, parameters, resultHandler);
+        Future<ResultSummary> resultSummaryFuture = execute(query, parameters);
+        setHandler(resultSummaryFuture, resultHandler);
         return this;
+    }
+
+    @Override
+    public Future<ResultSummary> execute(String query, Value parameters) {
+        return Future.fromCompletionStage(executeWriteTransaction(query, parameters), vertx.getOrCreateContext());
     }
 
     @Override
     public Neo4jClient findOne(String query, Handler<AsyncResult<Record>> resultHandler) {
-        executeReadTransactionSingle(query, EMPTY, resultHandler);
+        Future<Record> recordFuture = findOne(query, EMPTY);
+        setHandler(recordFuture, resultHandler);
         return this;
+    }
+
+    @Override
+    public Future<Record> findOne(String query) {
+        return Future.fromCompletionStage(executeReadTransactionSingle(query, EMPTY), vertx.getOrCreateContext());
     }
 
     @Override
     public Neo4jClient findOne(String query, Value parameters, Handler<AsyncResult<Record>> resultHandler) {
-        executeReadTransactionSingle(query, parameters, resultHandler);
+        Future<Record> recordFuture = findOne(query, parameters);
+        setHandler(recordFuture, resultHandler);
         return this;
+    }
+    @Override
+    public Future<Record> findOne(String query, Value parameters) {
+        return Future.fromCompletionStage(executeReadTransactionSingle(query, parameters), vertx.getOrCreateContext());
     }
 
     @Override
     public Neo4jClient find(String query, Handler<AsyncResult<List<Record>>> resultHandler) {
-        executeReadTransaction(query, EMPTY, resultHandler);
+        Future<List<Record>> listFuture = find(query, EMPTY);
+        setHandler(listFuture, resultHandler);
         return this;
+    }
+
+    @Override
+    public Future<List<Record>> find(String query) {
+        return Future.fromCompletionStage(executeReadTransaction(query, EMPTY), vertx.getOrCreateContext());
     }
 
     @Override
     public Neo4jClient find(String query, Value parameters, Handler<AsyncResult<List<Record>>> resultHandler) {
-        executeReadTransaction(query, parameters, resultHandler);
+        Future<List<Record>> listFuture = find(query, parameters);
+        setHandler(listFuture, resultHandler);
         return this;
     }
 
     @Override
+    public Future<List<Record>> find(String query, Value parameters) {
+        return Future.fromCompletionStage(executeReadTransaction(query, parameters), vertx.getOrCreateContext());
+    }
+
+    @Override
     public Neo4jClient bulkWrite(List<Query> queries, Handler<AsyncResult<SummaryCounters>> resultHandler) {
+        Future<SummaryCounters> summaryCountersFuture = bulkWrite(queries);
+        setHandler(summaryCountersFuture, resultHandler);
+        return this;
+    }
+
+    @Override
+    public Future<SummaryCounters> bulkWrite(List<Query> queries) {
         AsyncSession session = driver.asyncSession(DEFAULT_WRITE_SESSION_CONFIG);
-        session.writeTransactionAsync(tx -> {
+        return Future.fromCompletionStage(session.writeTransactionAsync(tx -> {
             CompletionStage<SummaryCounters> stage = CompletableFuture.completedFuture(EMPTY_STATS);
 
             for (Query query : queries) {
@@ -118,23 +160,25 @@ public class Neo4jClientImpl implements Neo4jClient {
 
             return stage;
         })
-        .whenComplete(wrapCallback(resultHandler))
-        .thenCompose(ignore -> session.closeAsync());
-        return this;
+        .whenComplete((ignore, error) -> session.closeAsync()), vertx.getOrCreateContext());
     }
 
     @Override
     public Neo4jClient begin(Handler<AsyncResult<Neo4jTransaction>> resultHandler) {
-        AsyncSession session = driver.asyncSession(DEFAULT_WRITE_SESSION_CONFIG);
-        Context context = vertx.getOrCreateContext();
-        session.beginTransactionAsync().thenAccept(tx -> {
-            context.runOnContext(v -> resultHandler.handle(Future.succeededFuture(new Neo4jTransactionImpl(vertx, tx, session))));
-        }).exceptionally(error -> {
-            context.runOnContext(v -> resultHandler.handle(Future.failedFuture(error)));
-            session.closeAsync();
-            return null;
-        });
+        Future<Neo4jTransaction> beginFuture = begin();
+        setHandler(beginFuture, resultHandler);
         return this;
+    }
+
+    @Override
+    public Future<Neo4jTransaction> begin() {
+        AsyncSession session = driver.asyncSession(DEFAULT_WRITE_SESSION_CONFIG);
+        return Future.fromCompletionStage(session.beginTransactionAsync()
+                .<Neo4jTransaction>thenApply(tx -> new Neo4jTransactionImpl(vertx, tx, session))
+                .exceptionally(error -> {
+                    session.closeAsync();
+                    return null;
+                }), vertx.getOrCreateContext());
     }
 
     @Override
@@ -143,56 +187,49 @@ public class Neo4jClientImpl implements Neo4jClient {
     }
 
     @Override
+    public Future<Neo4jRecordStream> queryStream(String query) {
+        return queryStream(query, EMPTY);
+    }
+
+    @Override
     public Neo4jClient queryStream(String query, Value parameters, Handler<AsyncResult<Neo4jRecordStream>> recordStreamHandler) {
+        Future<Neo4jRecordStream> neo4jRecordStreamFuture = queryStream(query, parameters);
+        setHandler(neo4jRecordStreamFuture, recordStreamHandler);
+        return this;
+    }
+
+    @Override
+    public Future<Neo4jRecordStream> queryStream(String query, Value parameters) {
         AsyncSession session = driver.asyncSession(DEFAULT_READ_SESSION_CONFIG);
         Context context = vertx.getOrCreateContext();
-        session.beginTransactionAsync().thenAccept(tx -> tx.runAsync(query, parameters).thenAccept(cursor -> {
-            context.runOnContext(v -> recordStreamHandler.handle(Future.succeededFuture(new Neo4jRecordStreamImpl(context, tx, session, new ResultCursorImpl(cursor, vertx)))));
+        return Future.fromCompletionStage(session.beginTransactionAsync().<Neo4jRecordStream>thenCompose(tx -> tx.runAsync(query, parameters).thenApply(cursor -> {
+            return new Neo4jRecordStreamImpl(context, tx, session, new ResultCursorImpl(cursor, vertx));
         }))
         .exceptionally(error -> {
-            context.runOnContext(v -> recordStreamHandler.handle(Future.failedFuture(error)));
             session.closeAsync();
             return null;
-        });
-        return this;
-
+        }), context);
     }
 
-    private void executeWriteTransaction(String query, Value parameters, Handler<AsyncResult<ResultSummary>> resultHandler) {
+    private CompletionStage<ResultSummary> executeWriteTransaction(String query, Value parameters) {
         AsyncSession session = driver.asyncSession(DEFAULT_WRITE_SESSION_CONFIG);
-        session.writeTransactionAsync(tx -> tx.runAsync(query, parameters)
+        return session.writeTransactionAsync(tx -> tx.runAsync(query, parameters)
                 .thenCompose(ResultCursor::consumeAsync))
-                .whenComplete(wrapCallback(resultHandler))
-                .thenCompose(ignore -> session.closeAsync());
+                .whenComplete((ignore, error) -> session.closeAsync());
     }
 
-    private void executeReadTransaction(String query, Value parameters, Handler<AsyncResult<List<Record>>> resultHandler) {
+    private CompletionStage<List<Record>> executeReadTransaction(String query, Value parameters) {
         AsyncSession session = driver.asyncSession(DEFAULT_READ_SESSION_CONFIG);
-        session.readTransactionAsync(tx -> tx.runAsync(query, parameters)
+        return session.readTransactionAsync(tx -> tx.runAsync(query, parameters)
                 .thenCompose(ResultCursor::listAsync))
-                .whenComplete(wrapCallback(resultHandler))
-                .thenCompose(ignore -> session.closeAsync());
+                .whenComplete((ignore, error) -> session.closeAsync());
     }
 
-    private void executeReadTransactionSingle(String query, Value parameters, Handler<AsyncResult<Record>> resultHandler) {
+    private CompletionStage<Record> executeReadTransactionSingle(String query, Value parameters) {
         AsyncSession session = driver.asyncSession(DEFAULT_READ_SESSION_CONFIG);
-        session.readTransactionAsync(tx -> tx.runAsync(query, parameters)
+        return session.readTransactionAsync(tx -> tx.runAsync(query, parameters)
                 .thenCompose(ResultCursor::singleAsync))
-                .whenComplete(wrapCallback(resultHandler))
-                .thenCompose(ignore -> session.closeAsync());
-    }
-
-    private <T> BiConsumer<T, Throwable> wrapCallback(Handler<AsyncResult<T>> resultHandler) {
-        Context context = vertx.getOrCreateContext();
-        return (result, error) -> {
-            context.runOnContext(v -> {
-                if (error != null) {
-                    resultHandler.handle(Future.failedFuture(error));
-                } else {
-                    resultHandler.handle(Future.succeededFuture(result));
-                }
-            });
-        };
+                .whenComplete((ignore, error) -> session.closeAsync());
     }
 
     @VisibleForTesting

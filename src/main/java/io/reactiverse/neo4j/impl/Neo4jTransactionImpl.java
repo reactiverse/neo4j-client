@@ -17,7 +17,10 @@
 package io.reactiverse.neo4j.impl;
 
 import io.reactiverse.neo4j.Neo4jTransaction;
-import io.vertx.core.*;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
 import org.neo4j.driver.Query;
 import org.neo4j.driver.Record;
 import org.neo4j.driver.Value;
@@ -27,10 +30,8 @@ import org.neo4j.driver.async.ResultCursor;
 import org.neo4j.driver.summary.ResultSummary;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.CompletionStage;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
+import static io.reactiverse.neo4j.Util.setHandler;
 
 public class Neo4jTransactionImpl implements Neo4jTransaction {
 
@@ -46,80 +47,61 @@ public class Neo4jTransactionImpl implements Neo4jTransaction {
 
     @Override
     public Neo4jTransaction query(String query, Value parameters, Handler<AsyncResult<ResultSummary>> resultHandler) {
-        doQuery(tx.runAsync(query, parameters), resultHandler);
+        Future<ResultSummary> resultSummaryFuture = query(query, parameters);
+        setHandler(resultSummaryFuture, resultHandler);
         return this;
     }
 
     @Override
-    public Neo4jTransaction query(Query statement, Handler<AsyncResult<ResultSummary>> resultHandler) {
-        doQuery(tx.runAsync(statement), resultHandler);
+    public Future<ResultSummary> query(String query, Value parameters) {
+        return Future.fromCompletionStage(tx.runAsync(query, parameters).thenCompose(ResultCursor::consumeAsync), vertx.getOrCreateContext());
+    }
+
+    @Override
+    public Neo4jTransaction query(Query query, Handler<AsyncResult<ResultSummary>> resultHandler) {
+        Future<ResultSummary> resultSummaryFuture = query(query);
+        setHandler(resultSummaryFuture, resultHandler);
         return this;
     }
 
     @Override
-    public Neo4jTransaction readQuery(Query statement, Handler<AsyncResult<List<Record>>> resultHandler) {
-        doReadQuery(tx.runAsync(statement), resultHandler);
+    public Future<ResultSummary> query(Query query) {
+        return Future.fromCompletionStage(tx.runAsync(query).thenCompose(ResultCursor::consumeAsync), vertx.getOrCreateContext());
+    }
+
+    @Override
+    public Neo4jTransaction readQuery(Query query, Handler<AsyncResult<List<Record>>> resultHandler) {
+        Future<List<Record>> listFuture = readQuery(query);
+        setHandler(listFuture, resultHandler);
         return this;
+    }
+
+    @Override
+    public Future<List<Record>> readQuery(Query query) {
+        return Future.fromCompletionStage(tx.runAsync(query).thenCompose(ResultCursor::listAsync), vertx.getOrCreateContext());
     }
 
     @Override
     public Neo4jTransaction commit(Handler<AsyncResult<Void>> resultHandler) {
-        Context context = vertx.getOrCreateContext();
-        tx.commitAsync().whenComplete((result, error) -> {
-                context.runOnContext(v -> {
-                    if (error != null) {
-                        resultHandler.handle(Future.failedFuture(error));
-                    } else {
-                        resultHandler.handle(Future.succeededFuture(result));
-                    }
-                });
-            })
-            .thenCompose(ignore -> session.closeAsync());
+        Future<Void> commitFuture = commit();
+        setHandler(commitFuture, resultHandler);
         return this;
     }
 
     @Override
+    public Future<Void> commit() {
+        return Future.fromCompletionStage(tx.commitAsync().whenComplete((ignore, error) -> session.closeAsync()), vertx.getOrCreateContext());
+    }
+
+    @Override
     public Neo4jTransaction rollback(Handler<AsyncResult<Void>> resultHandler) {
-        Context context = vertx.getOrCreateContext();
-        tx.rollbackAsync().whenComplete((result, error) -> {
-            context.runOnContext(v -> {
-                if (error != null) {
-                    resultHandler.handle(Future.failedFuture(error));
-                } else {
-                    resultHandler.handle(Future.succeededFuture(result));
-                }
-            });
-        })
-        .thenCompose(ignore -> session.closeAsync());
+        Future<Void> rollbackFuture = rollback();
+        setHandler(rollbackFuture, resultHandler);
         return this;
     }
 
-    private CompletionStage<Void> doQuery(CompletionStage<ResultCursor> executeQuery, Handler<AsyncResult<ResultSummary>> resultHandler) {
-        Context context = vertx.getOrCreateContext();
-        return executeQuery
-                .thenCompose(ResultCursor::consumeAsync)
-                .thenApply(summary -> {
-                    context.runOnContext(v -> resultHandler.handle(Future.succeededFuture(summary)));
-                    return false;
-                })
-                .exceptionally(error -> {
-                    context.runOnContext(v -> resultHandler.handle(Future.failedFuture(Optional.ofNullable(error.getCause()).orElse(error)))); // cause of completion exception or itself
-                    return true;
-                })
-                .thenCompose(ignore -> completedFuture(null));
-    }
-
-    private CompletionStage<Void> doReadQuery(CompletionStage<ResultCursor> executeQuery, Handler<AsyncResult<List<Record>>> resultHandler) {
-        Context context = vertx.getOrCreateContext();
-        return executeQuery
-                .thenCompose(ResultCursor::listAsync)
-                .thenApply(records -> {
-                    context.runOnContext(v -> resultHandler.handle(Future.succeededFuture(records)));
-                    return false;
-                })
-                .exceptionally(error -> {
-                    context.runOnContext(v -> resultHandler.handle(Future.failedFuture(Optional.ofNullable(error.getCause()).orElse(error)))); // cause of completion exception or itself
-                    return true;
-                }).thenCompose(ignore -> completedFuture(null));
+    @Override
+    public Future<Void> rollback() {
+        return Future.fromCompletionStage(tx.rollbackAsync().whenComplete((ignore, error) -> session.closeAsync()), vertx.getOrCreateContext());
     }
 }

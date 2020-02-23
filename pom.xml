@@ -31,7 +31,7 @@
     </parent>
 
     <properties>
-        <vertx.version>3.8.5</vertx.version>
+        <vertx.version>4.0.0-SNAPSHOT</vertx.version>
         <neo4j.version>4.0.0</neo4j.version>
         <powermock.version>2.0.2</powermock.version>
         <log4j2.version>2.12.1</log4j2.version>
