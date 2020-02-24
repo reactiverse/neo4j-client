@@ -28,9 +28,8 @@ import org.neo4j.driver.summary.ResultSummary;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletionStage;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
+import static io.reactiverse.neo4j.Util.wrapCallback;
 
 public class Neo4jTransactionImpl implements Neo4jTransaction {
 
@@ -46,34 +45,38 @@ public class Neo4jTransactionImpl implements Neo4jTransaction {
 
     @Override
     public Neo4jTransaction query(String query, Value parameters, Handler<AsyncResult<ResultSummary>> resultHandler) {
-        doQuery(tx.runAsync(query, parameters), resultHandler);
+        query(new Query(query, parameters), resultHandler);
         return this;
     }
 
     @Override
-    public Neo4jTransaction query(Query statement, Handler<AsyncResult<ResultSummary>> resultHandler) {
-        doQuery(tx.runAsync(statement), resultHandler);
+    public Neo4jTransaction query(Query query, Handler<AsyncResult<ResultSummary>> resultHandler) {
+        Context context = vertx.getOrCreateContext();
+        tx.runAsync(query).thenCompose(ResultCursor::consumeAsync)
+        .thenAccept(resultSummary -> context.runOnContext(v -> resultHandler.handle(Future.succeededFuture(resultSummary))))
+        .exceptionally(error -> {
+            context.runOnContext(v -> resultHandler.handle(Future.failedFuture(Optional.ofNullable(error.getCause()).orElse(error))));
+            return null;
+        });
         return this;
     }
 
     @Override
-    public Neo4jTransaction readQuery(Query statement, Handler<AsyncResult<List<Record>>> resultHandler) {
-        doReadQuery(tx.runAsync(statement), resultHandler);
+    public Neo4jTransaction readQuery(Query query, Handler<AsyncResult<List<Record>>> resultHandler) {
+        Context context = vertx.getOrCreateContext();
+        tx.runAsync(query).thenCompose(ResultCursor::listAsync)
+        .thenAccept(records -> context.runOnContext(v -> resultHandler.handle(Future.succeededFuture(records))))
+        .exceptionally(error -> {
+            context.runOnContext(v -> resultHandler.handle(Future.failedFuture(Optional.ofNullable(error.getCause()).orElse(error))));
+            return null;
+        });
         return this;
     }
 
     @Override
     public Neo4jTransaction commit(Handler<AsyncResult<Void>> resultHandler) {
         Context context = vertx.getOrCreateContext();
-        tx.commitAsync().whenComplete((result, error) -> {
-                context.runOnContext(v -> {
-                    if (error != null) {
-                        resultHandler.handle(Future.failedFuture(error));
-                    } else {
-                        resultHandler.handle(Future.succeededFuture(result));
-                    }
-                });
-            })
+        tx.commitAsync().whenComplete(wrapCallback(context, resultHandler))
             .thenCompose(ignore -> session.closeAsync());
         return this;
     }
@@ -81,45 +84,8 @@ public class Neo4jTransactionImpl implements Neo4jTransaction {
     @Override
     public Neo4jTransaction rollback(Handler<AsyncResult<Void>> resultHandler) {
         Context context = vertx.getOrCreateContext();
-        tx.rollbackAsync().whenComplete((result, error) -> {
-            context.runOnContext(v -> {
-                if (error != null) {
-                    resultHandler.handle(Future.failedFuture(error));
-                } else {
-                    resultHandler.handle(Future.succeededFuture(result));
-                }
-            });
-        })
+        tx.rollbackAsync().whenComplete(wrapCallback(context, resultHandler))
         .thenCompose(ignore -> session.closeAsync());
         return this;
-    }
-
-    private CompletionStage<Void> doQuery(CompletionStage<ResultCursor> executeQuery, Handler<AsyncResult<ResultSummary>> resultHandler) {
-        Context context = vertx.getOrCreateContext();
-        return executeQuery
-                .thenCompose(ResultCursor::consumeAsync)
-                .thenApply(summary -> {
-                    context.runOnContext(v -> resultHandler.handle(Future.succeededFuture(summary)));
-                    return false;
-                })
-                .exceptionally(error -> {
-                    context.runOnContext(v -> resultHandler.handle(Future.failedFuture(Optional.ofNullable(error.getCause()).orElse(error)))); // cause of completion exception or itself
-                    return true;
-                })
-                .thenCompose(ignore -> completedFuture(null));
-    }
-
-    private CompletionStage<Void> doReadQuery(CompletionStage<ResultCursor> executeQuery, Handler<AsyncResult<List<Record>>> resultHandler) {
-        Context context = vertx.getOrCreateContext();
-        return executeQuery
-                .thenCompose(ResultCursor::listAsync)
-                .thenApply(records -> {
-                    context.runOnContext(v -> resultHandler.handle(Future.succeededFuture(records)));
-                    return false;
-                })
-                .exceptionally(error -> {
-                    context.runOnContext(v -> resultHandler.handle(Future.failedFuture(Optional.ofNullable(error.getCause()).orElse(error)))); // cause of completion exception or itself
-                    return true;
-                }).thenCompose(ignore -> completedFuture(null));
     }
 }

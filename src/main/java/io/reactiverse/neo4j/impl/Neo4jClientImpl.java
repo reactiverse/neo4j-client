@@ -34,10 +34,10 @@ import org.neo4j.driver.summary.SummaryCounters;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.function.BiConsumer;
 import java.util.function.BinaryOperator;
 import java.util.function.Supplier;
 
+import static io.reactiverse.neo4j.Util.wrapCallback;
 import static java.util.Objects.requireNonNull;
 import static org.neo4j.driver.AccessMode.READ;
 import static org.neo4j.driver.AccessMode.WRITE;
@@ -106,6 +106,7 @@ public class Neo4jClientImpl implements Neo4jClient {
     @Override
     public Neo4jClient bulkWrite(List<Query> queries, Handler<AsyncResult<SummaryCounters>> resultHandler) {
         AsyncSession session = driver.asyncSession(DEFAULT_WRITE_SESSION_CONFIG);
+        Context context = vertx.getOrCreateContext();
         session.writeTransactionAsync(tx -> {
             CompletionStage<SummaryCounters> stage = CompletableFuture.completedFuture(EMPTY_STATS);
 
@@ -118,7 +119,7 @@ public class Neo4jClientImpl implements Neo4jClient {
 
             return stage;
         })
-        .whenComplete(wrapCallback(resultHandler))
+        .whenComplete(wrapCallback(context, resultHandler))
         .thenCompose(ignore -> session.closeAsync());
         return this;
     }
@@ -160,39 +161,29 @@ public class Neo4jClientImpl implements Neo4jClient {
 
     private void executeWriteTransaction(String query, Value parameters, Handler<AsyncResult<ResultSummary>> resultHandler) {
         AsyncSession session = driver.asyncSession(DEFAULT_WRITE_SESSION_CONFIG);
+        Context context = vertx.getOrCreateContext();
         session.writeTransactionAsync(tx -> tx.runAsync(query, parameters)
                 .thenCompose(ResultCursor::consumeAsync))
-                .whenComplete(wrapCallback(resultHandler))
+                .whenComplete(wrapCallback(context, resultHandler))
                 .thenCompose(ignore -> session.closeAsync());
     }
 
     private void executeReadTransaction(String query, Value parameters, Handler<AsyncResult<List<Record>>> resultHandler) {
         AsyncSession session = driver.asyncSession(DEFAULT_READ_SESSION_CONFIG);
+        Context context = vertx.getOrCreateContext();
         session.readTransactionAsync(tx -> tx.runAsync(query, parameters)
                 .thenCompose(ResultCursor::listAsync))
-                .whenComplete(wrapCallback(resultHandler))
+                .whenComplete(wrapCallback(context, resultHandler))
                 .thenCompose(ignore -> session.closeAsync());
     }
 
     private void executeReadTransactionSingle(String query, Value parameters, Handler<AsyncResult<Record>> resultHandler) {
         AsyncSession session = driver.asyncSession(DEFAULT_READ_SESSION_CONFIG);
+        Context context = vertx.getOrCreateContext();
         session.readTransactionAsync(tx -> tx.runAsync(query, parameters)
                 .thenCompose(ResultCursor::singleAsync))
-                .whenComplete(wrapCallback(resultHandler))
+                .whenComplete(wrapCallback(context, resultHandler))
                 .thenCompose(ignore -> session.closeAsync());
-    }
-
-    private <T> BiConsumer<T, Throwable> wrapCallback(Handler<AsyncResult<T>> resultHandler) {
-        Context context = vertx.getOrCreateContext();
-        return (result, error) -> {
-            context.runOnContext(v -> {
-                if (error != null) {
-                    resultHandler.handle(Future.failedFuture(error));
-                } else {
-                    resultHandler.handle(Future.succeededFuture(result));
-                }
-            });
-        };
     }
 
     @VisibleForTesting
