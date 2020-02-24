@@ -10,7 +10,7 @@ public final class Util {
 
     private Util() {}
 
-    public static  <T> void setHandler(Future<T> future, Handler<AsyncResult<T>> handler) {
+    public static <T> void setHandler(Future<T> future, Handler<AsyncResult<T>> handler) {
         Objects.requireNonNull(future, "future must not be null");
         if (handler != null) {
             future.setHandler(handler);
