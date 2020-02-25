@@ -16,10 +16,8 @@
 
 package io.reactiverse.neo4j;
 
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Log4j2LogDelegateFactory;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
@@ -29,8 +27,6 @@ import org.neo4j.driver.Query;
 import org.neo4j.driver.Record;
 import org.neo4j.driver.exceptions.ClientException;
 import org.neo4j.driver.exceptions.NoSuchRecordException;
-import org.neo4j.driver.summary.ResultSummary;
-import org.neo4j.driver.summary.SummaryCounters;
 import org.neo4j.harness.junit.Neo4jRule;
 
 import java.util.ArrayList;
@@ -39,7 +35,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import static io.vertx.core.logging.LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.assertj.core.util.Lists.newArrayList;
 import static org.neo4j.driver.Values.parameters;
@@ -77,7 +72,6 @@ public class Neo4jClientIT {
 
     @BeforeClass
     public static void prepareAll() {
-        System.setProperty(LOGGER_DELEGATE_FACTORY_CLASS_NAME, Log4j2LogDelegateFactory.class.getName());
         System.setProperty(JUL_LOGGING_MANAGER_PROPERTY, LOG4J2_JUL_LOG_MANAGER);
     }
 
@@ -96,7 +90,7 @@ public class Neo4jClientIT {
 
     @Test public void should_save(TestContext testContext) {
         Async async = testContext.async();
-        neo4jClient.execute(CREATE_PERSON_QUERY, savedPerson -> {
+        neo4jClient.execute(CREATE_PERSON_QUERY).setHandler(savedPerson -> {
             if (savedPerson.failed()) {
                 testContext.fail(savedPerson.cause());
             } else {
@@ -108,7 +102,7 @@ public class Neo4jClientIT {
 
     @Test public void should_save_with_param(TestContext testContext) {
         Async async = testContext.async();
-        neo4jClient.execute(CREATE_PERSON_QUERY_WITH_PARAM, parameters("name", "You"), savedPerson -> {
+        neo4jClient.execute(CREATE_PERSON_QUERY_WITH_PARAM, parameters("name", "You")).setHandler(savedPerson -> {
             if (savedPerson.failed()) {
                 testContext.fail(savedPerson.cause());
             } else {
@@ -120,13 +114,9 @@ public class Neo4jClientIT {
 
     @Test public void should_findOne(TestContext testContext) {
         Async async = testContext.async();
-        Promise<ResultSummary> createPerson = Promise.promise();
-        neo4jClient.execute(CREATE_PERSON_QUERY, createPerson);
-        createPerson.future().compose(savedPerson -> {
-            Promise<Record> findPerson = Promise.promise();
-            neo4jClient.findOne(FIND_PERSON_QUERY, findPerson);
-            return findPerson.future();
-        }).setHandler(foundPerson -> {
+        neo4jClient.execute(CREATE_PERSON_QUERY)
+        .compose(savedPerson -> neo4jClient.findOne(FIND_PERSON_QUERY))
+        .setHandler(foundPerson -> {
             if (foundPerson.failed()) {
                 testContext.fail(foundPerson.cause());
             } else {
@@ -138,13 +128,9 @@ public class Neo4jClientIT {
 
     @Test public void should_findOne_with_param(TestContext testContext) {
         Async async = testContext.async();
-        Promise<ResultSummary> createPerson = Promise.promise();
-        neo4jClient.execute(CREATE_PERSON_QUERY, createPerson);
-        createPerson.future().compose(savedPerson -> {
-            Promise<Record> findPerson = Promise.promise();
-            neo4jClient.findOne(FIND_PERSON_QUERY_WITH_PARAM, parameters("name", "You"), findPerson);
-            return findPerson.future();
-        }).setHandler(foundPerson -> {
+        neo4jClient.execute(CREATE_PERSON_QUERY)
+        .compose(savedPerson -> neo4jClient.findOne(FIND_PERSON_QUERY_WITH_PARAM, parameters("name", "You")))
+        .setHandler(foundPerson -> {
             if (foundPerson.failed()) {
                 testContext.fail(foundPerson.cause());
             } else {
@@ -156,17 +142,10 @@ public class Neo4jClientIT {
 
     @Test public void should_find(TestContext testContext) {
         Async async = testContext.async();
-        Promise<ResultSummary> createPerson = Promise.promise();
-        neo4jClient.execute(CREATE_PERSON_QUERY, createPerson);
-        createPerson.future().compose(savedPerson -> {
-            Promise<ResultSummary> createFriends = Promise.promise();
-            neo4jClient.execute(CREATE_FRIENDS_QUERY, createFriends);
-            return createFriends.future();
-        }).compose(savedFriends -> {
-            Promise<List<Record>> findFriends = Promise.promise();
-            neo4jClient.find(FIND_FRIENDS_QUERY, findFriends);
-            return findFriends.future();
-        }).setHandler(foundFriends -> {
+        neo4jClient.execute(CREATE_PERSON_QUERY)
+        .compose(savedPerson -> neo4jClient.execute(CREATE_FRIENDS_QUERY))
+        .compose(savedFriends -> neo4jClient.find(FIND_FRIENDS_QUERY))
+        .setHandler(foundFriends -> {
             if (foundFriends.failed()) {
                 testContext.fail(foundFriends.cause());
             } else {
@@ -178,17 +157,10 @@ public class Neo4jClientIT {
 
     @Test public void should_find_with_param(TestContext testContext) {
         Async async = testContext.async();
-        Promise<ResultSummary> createPerson = Promise.promise();
-        neo4jClient.execute(CREATE_PERSON_QUERY, createPerson);
-        createPerson.future().compose(savedPerson -> {
-            Promise<ResultSummary> createFriends = Promise.promise();
-            neo4jClient.execute(CREATE_FRIENDS_QUERY, createFriends);
-            return createFriends.future();
-        }).compose(savedFriends -> {
-            Promise<List<Record>> findFriends = Promise.promise();
-            neo4jClient.find(FIND_FRIENDS_QUERY_WITH_PARAM, parameters("name", "You"), findFriends);
-            return findFriends.future();
-        }).setHandler(foundFriends -> {
+        neo4jClient.execute(CREATE_PERSON_QUERY)
+        .compose(savedPerson -> neo4jClient.execute(CREATE_FRIENDS_QUERY))
+        .compose(savedFriends -> neo4jClient.find(FIND_FRIENDS_QUERY_WITH_PARAM, parameters("name", "You")))
+        .setHandler(foundFriends -> {
             if (foundFriends.failed()) {
                 testContext.fail(foundFriends.cause());
             } else {
@@ -200,17 +172,10 @@ public class Neo4jClientIT {
 
     @Test public void should_delete(TestContext testContext) {
         Async async = testContext.async();
-        Promise<ResultSummary> createPerson = Promise.promise();
-        neo4jClient.execute(CREATE_PERSON_QUERY, createPerson);
-        createPerson.future().compose(savedPerson -> {
-            Promise<Record> findPerson = Promise.promise();
-            neo4jClient.findOne(FIND_PERSON_QUERY, findPerson);
-            return findPerson.future();
-        }).compose(foundPerson -> {
-            Promise<ResultSummary> deletePerson = Promise.promise();
-            neo4jClient.execute(DELETE_PERSON_QUERY, deletePerson);
-            return deletePerson.future();
-        }).setHandler(deletedPerson -> {
+        neo4jClient.execute(CREATE_PERSON_QUERY)
+        .compose(savedPerson -> neo4jClient.findOne(FIND_PERSON_QUERY))
+        .compose(foundPerson -> neo4jClient.execute(DELETE_PERSON_QUERY))
+        .setHandler(deletedPerson -> {
             if (deletedPerson.failed()) {
                 testContext.fail(deletedPerson.cause());
             } else {
@@ -222,17 +187,10 @@ public class Neo4jClientIT {
 
     @Test public void should_delete_with_param(TestContext testContext) {
         Async async = testContext.async();
-        Promise<ResultSummary> createPerson = Promise.promise();
-        neo4jClient.execute(CREATE_PERSON_QUERY, createPerson);
-        createPerson.future().compose(savedPerson -> {
-            Promise<Record> findPerson = Promise.promise();
-            neo4jClient.findOne(FIND_PERSON_QUERY, findPerson);
-            return findPerson.future();
-        }).compose(foundPerson -> {
-            Promise<ResultSummary> deletePerson = Promise.promise();
-            neo4jClient.execute(DELETE_PERSON_QUERY_WITH_PARAM, parameters("name", "You"), deletePerson);
-            return deletePerson.future();
-        }).setHandler(deletedPerson -> {
+        neo4jClient.execute(CREATE_PERSON_QUERY)
+        .compose(savedPerson -> neo4jClient.findOne(FIND_PERSON_QUERY))
+        .compose(foundPerson -> neo4jClient.execute(DELETE_PERSON_QUERY_WITH_PARAM, parameters("name", "You")))
+        .setHandler(deletedPerson -> {
             if (deletedPerson.failed()) {
                 testContext.fail(deletedPerson.cause());
             } else {
@@ -248,9 +206,7 @@ public class Neo4jClientIT {
         queries.add(new Query("CREATE (:Company {name: $name})", parameters("name", "Wayne Enterprises")));
         queries.add(new Query("CREATE (:Person {name: $name})", parameters("name", "Alice")));
         queries.add(new Query("MATCH (person:Person {name: $employee}) MATCH (company:Company {name: $company}) CREATE (person)-[:WORKS_FOR]->(company)", parameters("employee", "Alice", "company", "Wayne Enterprises")));
-        Promise<SummaryCounters> createPersons = Promise.promise();
-        neo4jClient.bulkWrite(queries, createPersons);
-        createPersons.future().setHandler(foundNodes -> {
+        neo4jClient.bulkWrite(queries).setHandler(foundNodes -> {
             if (foundNodes.failed()) {
                 testContext.fail(foundNodes.cause());
             } else {
@@ -267,13 +223,9 @@ public class Neo4jClientIT {
         queries.add(new Query("CREATE (:Company {name: $name})", parameters("name", "Wayne Enterprises")));
         queries.add(new Query("CREATE (:Person {name: $name})", parameters("name", "Alice")));
         queries.add(new Query("MATCH (person:Person {name: $employee}) MATCH (company:Company {name: $company}) CREATE (person)-[:WORKS_FOR]->(company)", parameters("employee", "Alice", "company", "Wayne Enterprises")));
-        Promise<SummaryCounters> createPersons = Promise.promise();
-        neo4jClient.bulkWrite(queries, createPersons);
-        createPersons.future().compose(bulkDone -> {
-            Promise<List<Record>> found = Promise.promise();
-            neo4jClient.find("MATCH (person:Person)-[:WORKS_FOR]->(company:Company) RETURN person, company", found);
-            return found.future();
-        }).setHandler(foundRecords -> {
+        neo4jClient.bulkWrite(queries)
+        .compose(bulkDone -> neo4jClient.find("MATCH (person:Person)-[:WORKS_FOR]->(company:Company) RETURN person, company"))
+        .setHandler(foundRecords -> {
             if (foundRecords.failed()) {
                 testContext.fail(foundRecords.cause());
             } else {
@@ -285,28 +237,12 @@ public class Neo4jClientIT {
 
     @Test public void should_begin_transaction(TestContext testContext) {
         Async async = testContext.async();
-        Promise<Neo4jTransaction> transactionFuture = Promise.promise();
-        neo4jClient.begin(transactionFuture);
-        transactionFuture.future().compose(tx -> {
-            Promise<ResultSummary> firstSummaryFuture = Promise.promise();
-            tx.query("CREATE (:Company {name: $name})", parameters("name", "Wayne Enterprises"), firstSummaryFuture);
-            return firstSummaryFuture.future().compose(resultSummary -> {
-                Promise<ResultSummary> secondSummaryFuture = Promise.promise();
-                tx.query("CREATE (:Person {name: $name})", parameters("name", "Alice"), secondSummaryFuture);
-                return secondSummaryFuture.future();
-            }).compose(resultSummary -> {
-                Promise<ResultSummary> thirdSummaryFuture = Promise.promise();
-                tx.query("MATCH (person:Person {name: $employee}) MATCH (company:Company {name: $company}) CREATE (person)-[:WORKS_FOR]->(company)", parameters("employee", "Alice", "company", "Wayne Enterprises"), thirdSummaryFuture);
-                return thirdSummaryFuture.future();
-            }).compose(end -> {
-                Promise<Void> commitFuture = Promise.promise();
-                tx.commit(commitFuture);
-                return commitFuture.future();
-            }).compose(committed -> {
-                Promise<List<Record>> found = Promise.promise();
-                neo4jClient.find("MATCH (person:Person)-[:WORKS_FOR]->(company:Company) RETURN person, company", found);
-                return found.future();
-            });
+        neo4jClient.begin().compose(tx -> {
+            return tx.query("CREATE (:Company {name: $name})", parameters("name", "Wayne Enterprises"))
+            .compose(resultSummary -> tx.query("CREATE (:Person {name: $name})", parameters("name", "Alice")))
+            .compose(resultSummary -> tx.query("MATCH (person:Person {name: $employee}) MATCH (company:Company {name: $company}) CREATE (person)-[:WORKS_FOR]->(company)", parameters("employee", "Alice", "company", "Wayne Enterprises")))
+            .compose(end -> tx.commit())
+            .compose(committed -> neo4jClient.find("MATCH (person:Person)-[:WORKS_FOR]->(company:Company) RETURN person, company"));
         }).setHandler(foundRecords -> {
             if (foundRecords.failed()) {
                 testContext.fail(foundRecords.cause());
@@ -319,33 +255,19 @@ public class Neo4jClientIT {
 
     @Test public void should_check_transaction_is_not_committed(TestContext testContext) {
         Async async = testContext.async(1);
-        Promise<Neo4jTransaction> transactionFuture = Promise.promise();
-        neo4jClient.begin(transactionFuture);
-        transactionFuture.future().compose(tx -> {
-            Promise<ResultSummary> firstSummaryFuture = Promise.promise();
-            tx.query("CREATE (:Company {name: $name})", parameters("name", "Wayne Enterprises"), firstSummaryFuture);
-            return firstSummaryFuture.future().compose(resultSummary -> {
-                Promise<ResultSummary> secondSummaryFuture = Promise.promise();
-                tx.query("CREATE (:Person name: $name})", parameters("name", "Alice"), secondSummaryFuture); // bad query
-                return secondSummaryFuture.future();
-            }).compose(resultSummary -> {
-                Promise<Void> commitFuture = Promise.promise();
-                tx.commit(commitFuture);
-                return commitFuture.future();
-            }).onFailure(error -> {
-                Promise<Void> rollbackFuture = Promise.promise();
-                tx.rollback(rollbackFuture);
-            });
+         neo4jClient.begin().compose(tx -> {
+            return tx.query("CREATE (:Company {name: $name})", parameters("name", "Wayne Enterprises"))
+            .compose(resultSummary -> tx.query("CREATE (:Person name: $name})", parameters("name", "Alice")))
+            .compose(resultSummary -> tx.commit())
+            .onFailure(error -> tx.rollback());
         }).setHandler(commitTransaction -> {
             if (commitTransaction.succeeded()) {
                 testContext.fail("Transaction Commit should have failed");
             } else {
                 testContext.assertTrue(commitTransaction.cause() instanceof ClientException);
-                Promise<Record> findRecordFuture = Promise.promise();
-                neo4jClient.findOne("MATCH (you:Company {name:$name}) RETURN you", parameters("name", "Wayne Enterprises"), findRecordFuture);
-                findRecordFuture.future().setHandler(record -> {
+                neo4jClient.findOne("MATCH (you:Company {name:$name}) RETURN you", parameters("name", "Wayne Enterprises")).setHandler(record -> {
                     if (record.failed()) {
-                        testContext.assertTrue(record.cause() instanceof NoSuchRecordException);
+                        testContext.assertTrue(record.cause().getCause() instanceof NoSuchRecordException);
                         async.complete();
                     } else {
                         testContext.fail("Record should not have been retrieved");
@@ -357,39 +279,36 @@ public class Neo4jClientIT {
 
     @Test public void should_check_all_nodes_are_streamed(TestContext testContext) {
         Async async = testContext.async();
-        Promise<ResultSummary> createPerson = Promise.promise();
-        neo4jClient.execute(CREATE_PERSON_QUERY, createPerson);
-        createPerson.future().compose(savedPerson -> {
-            Promise<ResultSummary> createFriends = Promise.promise();
-            neo4jClient.execute(CREATE_FRIENDS_QUERY, createFriends);
-            return createFriends.future();
-        }).setHandler(ignore -> {
-            neo4jClient.queryStream(FIND_FRIENDS_QUERY_WITH_PARAM, parameters("name", "You"), testContext.asyncAssertSuccess(stream -> {
-                List<Record> items = Collections.synchronizedList(new ArrayList<>());
-                AtomicInteger idx = new AtomicInteger();
-                long pause = 500;
-                long start = System.nanoTime();
-                stream.endHandler(end -> {
-                    long duration = NANOSECONDS.toMillis(System.nanoTime() - start);
-                    testContext.assertEquals(items.size(),5);
-                    testContext.assertTrue(duration >= 2 * pause);
-                    async.complete();
-                })
-                .exceptionHandler(testContext::fail)
-                .handler(item -> {
-                    testContext.assertTrue(item != null);
-                    items.add(item);
-                    int j = idx.getAndIncrement();
-                    if (j == 1 || j == 3) {
-                        stream.pause();
-                        int emitted = items.size();
-                        vertx.setTimer(pause, tid -> {
-                            testContext.assertTrue(emitted == items.size());
-                            stream.resume();
-                        });
-                    }
-                });
-            }));
+        neo4jClient
+            .execute(CREATE_PERSON_QUERY)
+            .compose(savedPerson -> neo4jClient.execute(CREATE_FRIENDS_QUERY))
+            .setHandler(ignore -> {
+                neo4jClient.queryStream(FIND_FRIENDS_QUERY_WITH_PARAM, parameters("name", "You"), testContext.asyncAssertSuccess(stream -> {
+                    List<Record> items = Collections.synchronizedList(new ArrayList<>());
+                    AtomicInteger idx = new AtomicInteger();
+                    long pause = 500;
+                    long start = System.nanoTime();
+                    stream.endHandler(end -> {
+                        long duration = NANOSECONDS.toMillis(System.nanoTime() - start);
+                        testContext.assertEquals(items.size(),5);
+                        testContext.assertTrue(duration >= 2 * pause);
+                        async.complete();
+                    })
+                    .exceptionHandler(testContext::fail)
+                    .handler(item -> {
+                        testContext.assertTrue(item != null);
+                        items.add(item);
+                        int j = idx.getAndIncrement();
+                        if (j == 1 || j == 3) {
+                            stream.pause();
+                            int emitted = items.size();
+                            vertx.setTimer(pause, tid -> {
+                                testContext.assertTrue(emitted == items.size());
+                                stream.resume();
+                            });
+                        }
+                    });
+                }));
         });
     }
 
