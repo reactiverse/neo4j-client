@@ -31,7 +31,7 @@ import org.neo4j.driver.exceptions.ClientException;
 import org.neo4j.driver.exceptions.NoSuchRecordException;
 import org.neo4j.driver.summary.ResultSummary;
 import org.neo4j.driver.summary.SummaryCounters;
-import org.neo4j.harness.junit.rule.Neo4jRule;
+import org.neo4j.harness.junit.Neo4jRule;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -73,7 +73,7 @@ public class Neo4jClientIT {
     Neo4jClient neo4jClient;
 
     @Rule
-    public Neo4jRule neo4j = new Neo4jRule().withDisabledServer();
+    public Neo4jRule neo4j = new Neo4jRule();
 
     @BeforeClass
     public static void prepareAll() {
