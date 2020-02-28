@@ -17,8 +17,10 @@
 package io.reactiverse.neo4j.impl;
 
 import io.reactiverse.neo4j.Neo4jTransaction;
-import io.vertx.core.*;
-import io.vertx.core.impl.ContextInternal;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
 import org.neo4j.driver.Query;
 import org.neo4j.driver.Record;
 import org.neo4j.driver.Value;
@@ -28,9 +30,8 @@ import org.neo4j.driver.async.ResultCursor;
 import org.neo4j.driver.summary.ResultSummary;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.CompletionStage;
 
+import static io.reactiverse.neo4j.Util.fromCompletionStage;
 import static io.reactiverse.neo4j.Util.setHandler;
 
 public class Neo4jTransactionImpl implements Neo4jTransaction {
@@ -103,17 +104,5 @@ public class Neo4jTransactionImpl implements Neo4jTransaction {
     @Override
     public Future<Void> rollback() {
         return Future.fromCompletionStage(tx.rollbackAsync().whenComplete((ignore, error) -> session.closeAsync()), vertx.getOrCreateContext());
-    }
-
-    static <T> Future<T> fromCompletionStage(CompletionStage<T> completionStage, Context context) {
-        Promise<T> promise = ((ContextInternal) context).promise();
-        completionStage.whenComplete((value, err) -> {
-            if (err != null) {
-                promise.fail(Optional.ofNullable(err.getCause()).orElse(err));
-            } else {
-                promise.complete(value);
-            }
-        });
-        return promise.future();
     }
 }

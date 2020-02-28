@@ -267,7 +267,7 @@ public class Neo4jClientIT {
                 testContext.assertTrue(commitTransaction.cause() instanceof ClientException);
                 neo4jClient.findOne("MATCH (you:Company {name:$name}) RETURN you", parameters("name", "Wayne Enterprises")).setHandler(record -> {
                     if (record.failed()) {
-                        testContext.assertTrue(record.cause().getCause() instanceof NoSuchRecordException);
+                        testContext.assertTrue(record.cause() instanceof NoSuchRecordException);
                         async.complete();
                     } else {
                         testContext.fail("Record should not have been retrieved");

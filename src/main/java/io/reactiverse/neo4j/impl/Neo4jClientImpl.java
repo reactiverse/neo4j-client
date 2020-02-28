@@ -37,6 +37,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.BinaryOperator;
 import java.util.function.Supplier;
 
+import static io.reactiverse.neo4j.Util.fromCompletionStage;
 import static io.reactiverse.neo4j.Util.setHandler;
 import static java.util.Objects.requireNonNull;
 import static org.neo4j.driver.AccessMode.READ;
@@ -76,7 +77,7 @@ public class Neo4jClientImpl implements Neo4jClient {
 
     @Override
     public Future<ResultSummary> execute(String query) {
-        return Future.fromCompletionStage(executeWriteTransaction(query, EMPTY), vertx.getOrCreateContext());
+        return fromCompletionStage(executeWriteTransaction(query, EMPTY), vertx.getOrCreateContext());
     }
 
     @Override
@@ -88,7 +89,7 @@ public class Neo4jClientImpl implements Neo4jClient {
 
     @Override
     public Future<ResultSummary> execute(String query, Value parameters) {
-        return Future.fromCompletionStage(executeWriteTransaction(query, parameters), vertx.getOrCreateContext());
+        return fromCompletionStage(executeWriteTransaction(query, parameters), vertx.getOrCreateContext());
     }
 
     @Override
@@ -100,7 +101,7 @@ public class Neo4jClientImpl implements Neo4jClient {
 
     @Override
     public Future<Record> findOne(String query) {
-        return Future.fromCompletionStage(executeReadTransactionSingle(query, EMPTY), vertx.getOrCreateContext());
+        return fromCompletionStage(executeReadTransactionSingle(query, EMPTY), vertx.getOrCreateContext());
     }
 
     @Override
@@ -109,9 +110,10 @@ public class Neo4jClientImpl implements Neo4jClient {
         setHandler(recordFuture, resultHandler);
         return this;
     }
+
     @Override
     public Future<Record> findOne(String query, Value parameters) {
-        return Future.fromCompletionStage(executeReadTransactionSingle(query, parameters), vertx.getOrCreateContext());
+        return fromCompletionStage(executeReadTransactionSingle(query, parameters), vertx.getOrCreateContext());
     }
 
     @Override
@@ -123,7 +125,7 @@ public class Neo4jClientImpl implements Neo4jClient {
 
     @Override
     public Future<List<Record>> find(String query) {
-        return Future.fromCompletionStage(executeReadTransaction(query, EMPTY), vertx.getOrCreateContext());
+        return fromCompletionStage(executeReadTransaction(query, EMPTY), vertx.getOrCreateContext());
     }
 
     @Override
@@ -135,7 +137,7 @@ public class Neo4jClientImpl implements Neo4jClient {
 
     @Override
     public Future<List<Record>> find(String query, Value parameters) {
-        return Future.fromCompletionStage(executeReadTransaction(query, parameters), vertx.getOrCreateContext());
+        return fromCompletionStage(executeReadTransaction(query, parameters), vertx.getOrCreateContext());
     }
 
     @Override
@@ -148,7 +150,7 @@ public class Neo4jClientImpl implements Neo4jClient {
     @Override
     public Future<SummaryCounters> bulkWrite(List<Query> queries) {
         AsyncSession session = driver.asyncSession(DEFAULT_WRITE_SESSION_CONFIG);
-        return Future.fromCompletionStage(session.writeTransactionAsync(tx -> {
+        return fromCompletionStage(session.writeTransactionAsync(tx -> {
             CompletionStage<SummaryCounters> stage = CompletableFuture.completedFuture(EMPTY_STATS);
 
             for (Query query : queries) {
@@ -173,7 +175,7 @@ public class Neo4jClientImpl implements Neo4jClient {
     @Override
     public Future<Neo4jTransaction> begin() {
         AsyncSession session = driver.asyncSession(DEFAULT_WRITE_SESSION_CONFIG);
-        return Future.fromCompletionStage(session.beginTransactionAsync()
+        return fromCompletionStage(session.beginTransactionAsync()
                 .<Neo4jTransaction>thenApply(tx -> new Neo4jTransactionImpl(vertx, tx, session))
                 .exceptionally(error -> {
                     session.closeAsync();
@@ -202,7 +204,7 @@ public class Neo4jClientImpl implements Neo4jClient {
     public Future<Neo4jRecordStream> queryStream(String query, Value parameters) {
         AsyncSession session = driver.asyncSession(DEFAULT_READ_SESSION_CONFIG);
         Context context = vertx.getOrCreateContext();
-        return Future.fromCompletionStage(session.beginTransactionAsync().<Neo4jRecordStream>thenCompose(tx -> tx.runAsync(query, parameters).thenApply(cursor -> {
+        return fromCompletionStage(session.beginTransactionAsync().<Neo4jRecordStream>thenCompose(tx -> tx.runAsync(query, parameters).thenApply(cursor -> {
             return new Neo4jRecordStreamImpl(context, tx, session, new ResultCursorImpl(cursor, vertx));
         }))
         .exceptionally(error -> {

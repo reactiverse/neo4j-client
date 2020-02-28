@@ -16,11 +16,12 @@
 
 package io.reactiverse.neo4j;
 
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
+import io.vertx.core.*;
+import io.vertx.core.impl.ContextInternal;
 
 import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.CompletionStage;
 
 public final class Util {
 
@@ -31,5 +32,17 @@ public final class Util {
         if (handler != null) {
             future.setHandler(handler);
         }
+    }
+
+    public static <T> Future<T> fromCompletionStage(CompletionStage<T> completionStage, Context context) {
+        Promise<T> promise = ((ContextInternal) context).promise();
+        completionStage.whenComplete((value, err) -> {
+            if (err != null) {
+                promise.fail(Optional.ofNullable(err.getCause()).orElse(err));
+            } else {
+                promise.complete(value);
+            }
+        });
+        return promise.future();
     }
 }

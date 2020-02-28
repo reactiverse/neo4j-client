@@ -23,6 +23,7 @@ import io.vertx.core.Vertx;
 import org.neo4j.driver.Record;
 import org.neo4j.driver.async.ResultCursor;
 
+import static io.reactiverse.neo4j.Util.fromCompletionStage;
 import static io.reactiverse.neo4j.Util.setHandler;
 
 public class ResultCursorImpl implements io.reactiverse.neo4j.ResultCursor {
@@ -44,6 +45,6 @@ public class ResultCursorImpl implements io.reactiverse.neo4j.ResultCursor {
 
     @Override
     public Future<Record> one() {
-        return Future.fromCompletionStage(cursor.nextAsync(), vertx.getOrCreateContext());
+        return fromCompletionStage(cursor.nextAsync(), vertx.getOrCreateContext());
     }
 }
