@@ -20,8 +20,8 @@ import io.reactiverse.neo4j.Neo4jClient;
 import io.reactiverse.neo4j.Neo4jRecordStream;
 import io.reactiverse.neo4j.Neo4jTransaction;
 import io.reactiverse.neo4j.VisibleForTesting;
+import io.reactiverse.neo4j.options.Neo4jClientOptions;
 import io.vertx.core.*;
-import io.vertx.core.json.JsonObject;
 import io.vertx.core.shareddata.LocalMap;
 import io.vertx.core.shareddata.Shareable;
 import org.neo4j.driver.*;
@@ -57,7 +57,7 @@ public class Neo4jClientImpl implements Neo4jClient {
 
     private static final Value EMPTY = Values.parameters();
 
-    public Neo4jClientImpl(Vertx vertx, JsonObject config, String dataSourceName) {
+    public Neo4jClientImpl(Vertx vertx, Neo4jClientOptions config, String dataSourceName) {
         requireNonNull(vertx);
         requireNonNull(config);
         requireNonNull(dataSourceName);
@@ -209,11 +209,11 @@ public class Neo4jClientImpl implements Neo4jClient {
 
     private static class Neo4jHolder implements Shareable {
         Driver driver;
-        JsonObject config;
+        Neo4jClientOptions config;
         Runnable closeRunner;
         int refCount = 1;
 
-        Neo4jHolder(JsonObject config, Runnable closeRunner) {
+        Neo4jHolder(Neo4jClientOptions config, Runnable closeRunner) {
             this.config = config;
             this.closeRunner = closeRunner;
         }
@@ -221,7 +221,9 @@ public class Neo4jClientImpl implements Neo4jClient {
         synchronized Driver neo4jDriver() {
             if (driver == null) {
                 Supplier<Driver> driverSupplier = new DriverSupplier(config);
-                driver = driverSupplier.get();
+                Driver givenDriver = driverSupplier.get();
+                givenDriver.verifyConnectivity();
+                this.driver = givenDriver;
             }
 
             return driver;
@@ -243,7 +245,7 @@ public class Neo4jClientImpl implements Neo4jClient {
         }
     }
 
-    private Neo4jHolder lookupHolder(JsonObject config, String dataSourceName) {
+    private Neo4jHolder lookupHolder(Neo4jClientOptions config, String dataSourceName) {
         synchronized (vertx) {
             LocalMap<String, Neo4jHolder> map = vertx.sharedData().getLocalMap(NEO4J_CLIENT_MAP_NAME);
             Neo4jHolder theHolder = map.get(dataSourceName);

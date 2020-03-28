@@ -17,13 +17,13 @@
 package io.reactiverse.neo4j;
 
 import io.reactiverse.neo4j.impl.Neo4jClientImpl;
+import io.reactiverse.neo4j.options.Neo4jClientOptions;
 import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
 import org.neo4j.driver.Query;
 import org.neo4j.driver.Record;
 import org.neo4j.driver.Value;
@@ -49,7 +49,7 @@ public interface Neo4jClient {
      *
      * @return the client
      */
-    static Neo4jClient createShared(Vertx vertx, JsonObject config) {
+    static Neo4jClient createShared(Vertx vertx, Neo4jClientOptions config) {
         return new Neo4jClientImpl(vertx, config, DEFAULT_POOL_NAME);
     }
 
@@ -62,7 +62,7 @@ public interface Neo4jClient {
      * @param config  the driver configuration
      * @return the client
      */
-    static Neo4jClient createNonShared(Vertx vertx, JsonObject config) {
+    static Neo4jClient createNonShared(Vertx vertx, Neo4jClientOptions config) {
         return new Neo4jClientImpl(vertx, config, UUID.randomUUID().toString());
     }
 

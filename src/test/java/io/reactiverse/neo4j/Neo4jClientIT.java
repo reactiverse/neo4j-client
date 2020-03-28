@@ -16,10 +16,11 @@
 
 package io.reactiverse.neo4j;
 
+import io.reactiverse.neo4j.options.Neo4jClientAuthOptions;
+import io.reactiverse.neo4j.options.Neo4jClientOptions;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Log4j2LogDelegateFactory;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
@@ -39,7 +40,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import static io.vertx.core.logging.LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME;
+import static io.reactiverse.neo4j.options.AuthSchemeOption.NONE;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.assertj.core.util.Lists.newArrayList;
 import static org.neo4j.driver.Values.parameters;
@@ -77,7 +78,6 @@ public class Neo4jClientIT {
 
     @BeforeClass
     public static void prepareAll() {
-        System.setProperty(LOGGER_DELEGATE_FACTORY_CLASS_NAME, Log4j2LogDelegateFactory.class.getName());
         System.setProperty(JUL_LOGGING_MANAGER_PROPERTY, LOG4J2_JUL_LOG_MANAGER);
     }
 
@@ -85,7 +85,12 @@ public class Neo4jClientIT {
     public void onSetUp() {
         vertx = Vertx.vertx();
         dbConfig = new JsonObject().put("url", neo4j.boltURI().toString());
-        neo4jClient = Neo4jClient.createShared(vertx, new JsonObject().put("url", neo4j.boltURI().toString()));
+        neo4jClient = Neo4jClient.createShared(vertx, new Neo4jClientOptions()
+                .setLogLeakedSessions(true)
+                .setAuthOptions(new Neo4jClientAuthOptions().setAuthScheme(NONE))
+                .setHost(neo4j.boltURI().getHost())
+                .setPort(neo4j.boltURI().getPort())
+        );
     }
 
     @After

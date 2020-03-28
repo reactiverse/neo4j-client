@@ -19,9 +19,9 @@ package examples;
 import io.reactiverse.neo4j.Neo4jClient;
 import io.reactiverse.neo4j.Neo4jRecordStream;
 import io.reactiverse.neo4j.Neo4jTransaction;
+import io.reactiverse.neo4j.options.Neo4jClientOptions;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
 import io.vertx.docgen.Source;
 import org.neo4j.driver.Query;
 import org.neo4j.driver.Record;
@@ -34,7 +34,7 @@ import java.util.List;
 @Source
 public class Examples {
 
-    public void sharedClient(Vertx vertx, JsonObject config) {
+    public void sharedClient(Vertx vertx, Neo4jClientOptions config) {
         Neo4jClient.createShared(vertx, config);
     }
 

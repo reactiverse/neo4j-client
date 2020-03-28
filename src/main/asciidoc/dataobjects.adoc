@@ -1,0 +1,53 @@
+= Cheatsheets
+
+[[Neo4jClientAuthOptions]]
+== Neo4jClientAuthOptions
+
+
+[cols=">25%,25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[authScheme]]`@authScheme`|`link:enums.html#AuthSchemeOption[AuthSchemeOption]`|-
+|[[base64EncodedTicket]]`@base64EncodedTicket`|`String`|-
+|[[password]]`@password`|`String`|-
+|[[realm]]`@realm`|`String`|-
+|[[scheme]]`@scheme`|`String`|-
+|[[username]]`@username`|`String`|-
+|===
+
+[[Neo4jClientEncryptionOptions]]
+== Neo4jClientEncryptionOptions
+
+
+[cols=">25%,25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[certificateFilePath]]`@certificateFilePath`|`String`|-
+|[[hostnameVerification]]`@hostnameVerification`|`Boolean`|-
+|[[trustStrategy]]`@trustStrategy`|`link:enums.html#Strategy[Strategy]`|-
+|===
+
+[[Neo4jClientOptions]]
+== Neo4jClientOptions
+
+
+[cols=">25%,25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[authOptions]]`@authOptions`|`link:dataobjects.html#Neo4jClientAuthOptions[Neo4jClientAuthOptions]`|-
+|[[clusterNodeURIs]]`@clusterNodeURIs`|`Array of String`|-
+|[[connectionAcquisitionTimeout]]`@connectionAcquisitionTimeout`|`Number (long)`|-
+|[[driverMetricsEnabled]]`@driverMetricsEnabled`|`Boolean`|-
+|[[encryptionEnabled]]`@encryptionEnabled`|`Boolean`|-
+|[[encryptionOptions]]`@encryptionOptions`|`link:dataobjects.html#Neo4jClientEncryptionOptions[Neo4jClientEncryptionOptions]`|-
+|[[fetchSize]]`@fetchSize`|`Number (long)`|-
+|[[host]]`@host`|`String`|-
+|[[logLeakedSessions]]`@logLeakedSessions`|`Boolean`|-
+|[[maxConnectionPoolSize]]`@maxConnectionPoolSize`|`Number (int)`|-
+|[[numberOfEventLoopThreads]]`@numberOfEventLoopThreads`|`Number (int)`|-
+|[[port]]`@port`|`Number (int)`|-
+|===
+
