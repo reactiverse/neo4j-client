@@ -21,7 +21,7 @@ import org.neo4j.driver.Config.TrustStrategy.Strategy
 fun neo4jClientEncryptionOptionsOf(
   certificateFilePath: String? = null,
   hostnameVerification: Boolean? = null,
-  trustStrategy: Strategy? = null): Neo4jClientEncryptionOptions = io.reactiverse.neo4j.options.Neo4jClientEncryptionOptions().apply {
+  strategy: Strategy? = null): Neo4jClientEncryptionOptions = io.reactiverse.neo4j.options.Neo4jClientEncryptionOptions().apply {
 
   if (certificateFilePath != null) {
     this.setCertificateFilePath(certificateFilePath)
@@ -29,19 +29,19 @@ fun neo4jClientEncryptionOptionsOf(
   if (hostnameVerification != null) {
     this.setHostnameVerification(hostnameVerification)
   }
-  if (trustStrategy != null) {
-    this.setTrustStrategy(trustStrategy)
+  if (strategy != null) {
+    this.setStrategy(strategy)
   }
 }
 
 @Deprecated(
   message = "This function will be removed in a future version",
-  replaceWith = ReplaceWith("neo4jClientEncryptionOptionsOf(certificateFilePath, hostnameVerification, trustStrategy)")
+  replaceWith = ReplaceWith("neo4jClientEncryptionOptionsOf(certificateFilePath, hostnameVerification, strategy)")
 )
 fun Neo4jClientEncryptionOptions(
   certificateFilePath: String? = null,
   hostnameVerification: Boolean? = null,
-  trustStrategy: Strategy? = null): Neo4jClientEncryptionOptions = io.reactiverse.neo4j.options.Neo4jClientEncryptionOptions().apply {
+  strategy: Strategy? = null): Neo4jClientEncryptionOptions = io.reactiverse.neo4j.options.Neo4jClientEncryptionOptions().apply {
 
   if (certificateFilePath != null) {
     this.setCertificateFilePath(certificateFilePath)
@@ -49,8 +49,8 @@ fun Neo4jClientEncryptionOptions(
   if (hostnameVerification != null) {
     this.setHostnameVerification(hostnameVerification)
   }
-  if (trustStrategy != null) {
-    this.setTrustStrategy(trustStrategy)
+  if (strategy != null) {
+    this.setStrategy(strategy)
   }
 }
 

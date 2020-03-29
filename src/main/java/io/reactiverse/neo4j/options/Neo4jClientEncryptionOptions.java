@@ -33,7 +33,7 @@ public class Neo4jClientEncryptionOptions {
 
     private static final Config DEFAULT_CONFIG = Config.defaultConfig();
 
-    private Strategy trustStrategy;
+    private Strategy strategy;
     private String certificateFilePath;
     private boolean hostnameVerification;
 
@@ -53,17 +53,17 @@ public class Neo4jClientEncryptionOptions {
     }
 
     private void init() {
-        trustStrategy = DEFAULT_CONFIG.trustStrategy().strategy();
+        strategy = DEFAULT_CONFIG.trustStrategy().strategy();
         certificateFilePath = Optional.ofNullable(DEFAULT_CONFIG.trustStrategy().certFile()).map(File::getAbsolutePath).orElse(null);
         hostnameVerification = DEFAULT_CONFIG.trustStrategy().isHostnameVerificationEnabled();
     }
 
-    public Strategy getTrustStrategy() {
-        return trustStrategy;
+    public Strategy getStrategy() {
+        return strategy;
     }
 
-    public Neo4jClientEncryptionOptions setTrustStrategy(Strategy trustStrategy) {
-        this.trustStrategy = trustStrategy;
+    public Neo4jClientEncryptionOptions setStrategy(Strategy strategy) {
+        this.strategy = strategy;
         return this;
     }
 
@@ -76,6 +76,10 @@ public class Neo4jClientEncryptionOptions {
         return this;
     }
 
+    public boolean isHostnameVerification() {
+        return hostnameVerification;
+    }
+
     public boolean getHostnameVerification() {
         return hostnameVerification;
     }
@@ -85,11 +89,11 @@ public class Neo4jClientEncryptionOptions {
         return this;
     }
 
-    public static TrustStrategy resolveTrustStrategy(Neo4jClientEncryptionOptions neo4jClientEncryptionOptions) {
-        switch (neo4jClientEncryptionOptions.getTrustStrategy()) {
-            case TRUST_ALL_CERTIFICATES: return toTrustAllCertificatesStrategy.apply(neo4jClientEncryptionOptions);
-            case TRUST_CUSTOM_CA_SIGNED_CERTIFICATES: return toTrustCustomCaSignedCertificatesStrategy.apply(neo4jClientEncryptionOptions);
-            default: return toTrustSystemCertificates.apply(neo4jClientEncryptionOptions);
+    TrustStrategy toTrustStrategy() {
+        switch (getStrategy()) {
+            case TRUST_ALL_CERTIFICATES: return toTrustAllCertificatesStrategy.apply(this);
+            case TRUST_CUSTOM_CA_SIGNED_CERTIFICATES: return toTrustCustomCaSignedCertificatesStrategy.apply(this);
+            default: return toTrustSystemCertificates.apply(this);
         }
     }
 

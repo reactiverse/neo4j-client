@@ -21,9 +21,9 @@ public class Neo4jClientEncryptionOptionsConverter {
             obj.setHostnameVerification((Boolean)member.getValue());
           }
           break;
-        case "trustStrategy":
+        case "strategy":
           if (member.getValue() instanceof String) {
-            obj.setTrustStrategy(org.neo4j.driver.Config.TrustStrategy.Strategy.valueOf((String)member.getValue()));
+            obj.setStrategy(org.neo4j.driver.Config.TrustStrategy.Strategy.valueOf((String)member.getValue()));
           }
           break;
       }
@@ -39,8 +39,8 @@ public class Neo4jClientEncryptionOptionsConverter {
       json.put("certificateFilePath", obj.getCertificateFilePath());
     }
     json.put("hostnameVerification", obj.getHostnameVerification());
-    if (obj.getTrustStrategy() != null) {
-      json.put("trustStrategy", obj.getTrustStrategy().name());
+    if (obj.getStrategy() != null) {
+      json.put("strategy", obj.getStrategy().name());
     }
   }
 }

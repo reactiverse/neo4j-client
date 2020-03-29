@@ -17,7 +17,6 @@
 package io.reactiverse.neo4j.options;
 
 import io.vertx.codegen.annotations.DataObject;
-import io.vertx.core.VertxOptions;
 import io.vertx.core.json.JsonObject;
 import org.neo4j.driver.AuthToken;
 import org.neo4j.driver.Config;
@@ -27,8 +26,6 @@ import org.neo4j.driver.Logging;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-
-import static io.reactiverse.neo4j.options.Neo4jClientEncryptionOptions.resolveTrustStrategy;
 
 @DataObject(generateConverter = true)
 public class Neo4jClientOptions {
@@ -85,7 +82,7 @@ public class Neo4jClientOptions {
         clusterNodeURIs = new HashSet<>();
         maxConnectionPoolSize = DEFAULT_CONFIG.maxConnectionPoolSize();
         connectionAcquisitionTimeout = DEFAULT_CONFIG.connectionAcquisitionTimeoutMillis();
-        numberOfEventLoopThreads = DEFAULT_CONFIG.eventLoopThreads() == 0 ? VertxOptions.DEFAULT_EVENT_LOOP_POOL_SIZE : DEFAULT_CONFIG.eventLoopThreads();
+        numberOfEventLoopThreads = DEFAULT_CONFIG.eventLoopThreads();
         logLeakedSessions = DEFAULT_CONFIG.logLeakedSessions();
         fetchSize = DEFAULT_CONFIG.fetchSize();
         encryptionEnabled = DEFAULT_CONFIG.encrypted();
@@ -223,7 +220,7 @@ public class Neo4jClientOptions {
 
     public Neo4jClientOptions setEncryptionOptions(Neo4jClientEncryptionOptions encryptionOptions) {
         this.encryptionOptions = encryptionOptions;
-        builder.withTrustStrategy(resolveTrustStrategy(encryptionOptions));
+        builder.withTrustStrategy(encryptionOptions.toTrustStrategy());
         return this;
     }
 }
