@@ -82,6 +82,35 @@ suspend fun Neo4jClient.executeAwait(query: String, parameters: Value): ResultSu
 }
 
 /**
+ * Suspending version of method [io.reactiverse.neo4j.Neo4jClient.delete]
+ *
+ * @param query the cypher query
+ * @return [List<Record>]
+ *
+ * NOTE: This function has been automatically generated from [io.reactiverse.neo4j.Neo4jClient] using Vert.x codegen.
+ */
+suspend fun Neo4jClient.deleteAwait(query: String): List<Record> {
+  return awaitResult {
+    this.delete(query, it)
+  }
+}
+
+/**
+ * Suspending version of method [io.reactiverse.neo4j.Neo4jClient.delete]
+ *
+ * @param query the cypher query
+ * @param parameters the cypher parameters
+ * @return [List<Record>]
+ *
+ * NOTE: This function has been automatically generated from [io.reactiverse.neo4j.Neo4jClient] using Vert.x codegen.
+ */
+suspend fun Neo4jClient.deleteAwait(query: String, parameters: Value): List<Record> {
+  return awaitResult {
+    this.delete(query, parameters, it)
+  }
+}
+
+/**
  * Suspending version of method [io.reactiverse.neo4j.Neo4jClient.findOne]
  *
  * @param query the cypher query

@@ -247,6 +247,50 @@ public class Neo4jClientIT {
         });
     }
 
+    @Test public void should_delete_and_retrieve_results(TestContext testContext) {
+        Async async = testContext.async();
+        Promise<ResultSummary> createPerson = Promise.promise();
+        neo4jClient.execute(CREATE_PERSON_QUERY, createPerson);
+        createPerson.future().compose(savedPerson -> {
+            Promise<Record> findPerson = Promise.promise();
+            neo4jClient.findOne(FIND_PERSON_QUERY, findPerson);
+            return findPerson.future();
+        }).compose(foundPerson -> {
+            Promise<List<Record>> deletePerson = Promise.promise();
+            neo4jClient.delete(DELETE_PERSON_QUERY_WITH_RETURNED_RESULT, deletePerson);
+            return deletePerson.future();
+        }).setHandler(deletedPerson -> {
+            if (deletedPerson.failed()) {
+                testContext.fail(deletedPerson.cause());
+            } else {
+                testContext.assertEquals(deletedPerson.result().size(), 1);
+                async.complete();
+            }
+        });
+    }
+
+    @Test public void should_delete_with_param_and_retrieve_results(TestContext testContext) {
+        Async async = testContext.async();
+        Promise<ResultSummary> createPerson = Promise.promise();
+        neo4jClient.execute(CREATE_PERSON_QUERY, createPerson);
+        createPerson.future().compose(savedPerson -> {
+            Promise<Record> findPerson = Promise.promise();
+            neo4jClient.findOne(FIND_PERSON_QUERY, findPerson);
+            return findPerson.future();
+        }).compose(foundPerson -> {
+            Promise<List<Record>> deletePerson = Promise.promise();
+            neo4jClient.delete(DELETE_PERSON_QUERY_WITH_PARAM_WITH_RETURNED_RESULT, parameters("name", "You"), deletePerson);
+            return deletePerson.future();
+        }).setHandler(deletedPerson -> {
+            if (deletedPerson.failed()) {
+                testContext.fail(deletedPerson.cause());
+            } else {
+                testContext.assertEquals(deletedPerson.result().size(), 1);
+                async.complete();
+            }
+        });
+    }
+
     @Test public void should_check_counter_after_bulk_write(TestContext testContext) {
         Async async = testContext.async();
         List<Query> queries = new ArrayList<>(3);
@@ -419,5 +463,9 @@ public class Neo4jClientIT {
 
     private static final String DELETE_PERSON_QUERY = "MATCH (you:Person {name:'You'}) DELETE you";
 
-    private static final String DELETE_PERSON_QUERY_WITH_PARAM = "MATCH (you:Person {name:$name}) DELETE you";
+    private static final String DELETE_PERSON_QUERY_WITH_RETURNED_RESULT = "MATCH (you:Person {name:'You'}) DELETE you RETURN you";
+
+    private static final String DELETE_PERSON_QUERY_WITH_PARAM = "MATCH (you:Person {name:{name}}) DELETE you";
+
+    private static final String DELETE_PERSON_QUERY_WITH_PARAM_WITH_RETURNED_RESULT = "MATCH (you:Person {name:{name}}) DELETE you RETURN you";
 }

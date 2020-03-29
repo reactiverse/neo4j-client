@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BinaryOperator;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static io.reactiverse.neo4j.Util.wrapCallback;
@@ -69,37 +70,48 @@ public class Neo4jClientImpl implements Neo4jClient {
 
     @Override
     public Neo4jClient execute(String query, Handler<AsyncResult<ResultSummary>> resultHandler) {
-        executeWriteTransaction(query, EMPTY, resultHandler);
+        execute(query, EMPTY, resultHandler);
         return this;
     }
 
     @Override
     public Neo4jClient execute(String query, Value parameters, Handler<AsyncResult<ResultSummary>> resultHandler) {
-        executeWriteTransaction(query, parameters, resultHandler);
+        executeWriteTransaction(query, parameters, ResultCursor::consumeAsync, resultHandler);
+        return this;
+    }
+
+    @Override
+    public Neo4jClient delete(String query, Handler<AsyncResult<List<Record>>> resultHandler) {
+        return delete(query, EMPTY, resultHandler);
+    }
+
+    @Override
+    public Neo4jClient delete(String query, Value parameters, Handler<AsyncResult<List<Record>>> resultHandler) {
+        executeWriteTransaction(query, parameters, ResultCursor::listAsync, resultHandler);
         return this;
     }
 
     @Override
     public Neo4jClient findOne(String query, Handler<AsyncResult<Record>> resultHandler) {
-        executeReadTransactionSingle(query, EMPTY, resultHandler);
+        findOne(query, EMPTY, resultHandler);
         return this;
     }
 
     @Override
     public Neo4jClient findOne(String query, Value parameters, Handler<AsyncResult<Record>> resultHandler) {
-        executeReadTransactionSingle(query, parameters, resultHandler);
+        executeReadTransaction(query, parameters, ResultCursor::singleAsync, resultHandler);
         return this;
     }
 
     @Override
     public Neo4jClient find(String query, Handler<AsyncResult<List<Record>>> resultHandler) {
-        executeReadTransaction(query, EMPTY, resultHandler);
+        find(query, EMPTY, resultHandler);
         return this;
     }
 
     @Override
     public Neo4jClient find(String query, Value parameters, Handler<AsyncResult<List<Record>>> resultHandler) {
-        executeReadTransaction(query, parameters, resultHandler);
+        executeReadTransaction(query, parameters, ResultCursor::listAsync, resultHandler);
         return this;
     }
 
@@ -159,29 +171,20 @@ public class Neo4jClientImpl implements Neo4jClient {
 
     }
 
-    private void executeWriteTransaction(String query, Value parameters, Handler<AsyncResult<ResultSummary>> resultHandler) {
+    private <T> void executeWriteTransaction(String query, Value parameters, Function<ResultCursor, CompletionStage<T>> resultFunction, Handler<AsyncResult<T>> resultHandler) {
         AsyncSession session = driver.asyncSession(DEFAULT_WRITE_SESSION_CONFIG);
         Context context = vertx.getOrCreateContext();
         session.writeTransactionAsync(tx -> tx.runAsync(query, parameters)
-                .thenCompose(ResultCursor::consumeAsync))
+                .thenCompose(resultFunction))
                 .whenComplete(wrapCallback(context, resultHandler))
                 .thenCompose(ignore -> session.closeAsync());
     }
 
-    private void executeReadTransaction(String query, Value parameters, Handler<AsyncResult<List<Record>>> resultHandler) {
+    private <T> void executeReadTransaction(String query, Value parameters, Function<ResultCursor, CompletionStage<T>> resultFunction, Handler<AsyncResult<T>> resultHandler) {
         AsyncSession session = driver.asyncSession(DEFAULT_READ_SESSION_CONFIG);
         Context context = vertx.getOrCreateContext();
         session.readTransactionAsync(tx -> tx.runAsync(query, parameters)
-                .thenCompose(ResultCursor::listAsync))
-                .whenComplete(wrapCallback(context, resultHandler))
-                .thenCompose(ignore -> session.closeAsync());
-    }
-
-    private void executeReadTransactionSingle(String query, Value parameters, Handler<AsyncResult<Record>> resultHandler) {
-        AsyncSession session = driver.asyncSession(DEFAULT_READ_SESSION_CONFIG);
-        Context context = vertx.getOrCreateContext();
-        session.readTransactionAsync(tx -> tx.runAsync(query, parameters)
-                .thenCompose(ResultCursor::singleAsync))
+                .thenCompose(resultFunction))
                 .whenComplete(wrapCallback(context, resultHandler))
                 .thenCompose(ignore -> session.closeAsync());
     }

@@ -90,6 +90,29 @@ public interface Neo4jClient {
     Neo4jClient execute(String query, Value parameters, Handler<AsyncResult<ResultSummary>> resultHandler);
 
     /**
+     * Executes and returns deleted results
+     *
+     * @param query  the cypher query
+     * @param resultHandler  the handler to be called when the query has completed
+     * @return the current Neo4jClient instance
+     */
+    @GenIgnore(GenIgnore.PERMITTED_TYPE)
+    @Fluent
+    Neo4jClient delete(String query, Handler<AsyncResult<List<Record>>> resultHandler);
+
+    /**
+     * Executes and returns deleted results
+     *
+     * @param query  the cypher query
+     * @param parameters  the cypher parameters
+     * @param resultHandler  the handler to be called when the query has completed
+     * @return the current Neo4jClient instance
+     */
+    @GenIgnore(GenIgnore.PERMITTED_TYPE)
+    @Fluent
+    Neo4jClient delete(String query, Value parameters, Handler<AsyncResult<List<Record>>> resultHandler);
+
+    /**
      * Finds exactly one record
      *
      * @param query  the cypher query
