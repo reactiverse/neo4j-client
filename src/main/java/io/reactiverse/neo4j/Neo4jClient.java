@@ -17,6 +17,7 @@
 package io.reactiverse.neo4j;
 
 import io.reactiverse.neo4j.impl.Neo4jClientImpl;
+import io.reactiverse.neo4j.options.Neo4jClientOptions;
 import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.codegen.annotations.VertxGen;
@@ -24,7 +25,6 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
 import org.neo4j.driver.Query;
 import org.neo4j.driver.Record;
 import org.neo4j.driver.Value;
@@ -50,7 +50,7 @@ public interface Neo4jClient {
      *
      * @return the client
      */
-    static Neo4jClient createShared(Vertx vertx, JsonObject config) {
+    static Neo4jClient createShared(Vertx vertx, Neo4jClientOptions config) {
         return new Neo4jClientImpl(vertx, config, DEFAULT_POOL_NAME);
     }
 
@@ -63,7 +63,7 @@ public interface Neo4jClient {
      * @param config  the driver configuration
      * @return the client
      */
-    static Neo4jClient createNonShared(Vertx vertx, JsonObject config) {
+    static Neo4jClient createNonShared(Vertx vertx, Neo4jClientOptions config) {
         return new Neo4jClientImpl(vertx, config, UUID.randomUUID().toString());
     }
 
@@ -95,6 +95,35 @@ public interface Neo4jClient {
 
     @GenIgnore(GenIgnore.PERMITTED_TYPE)
     Future<ResultSummary> execute(String query, Value parameters);
+
+    /**
+     * Executes and returns deleted results
+     *
+     * @param query  the cypher query
+     * @param resultHandler  the handler to be called when the query has completed
+     * @return the current Neo4jClient instance
+     */
+    @GenIgnore(GenIgnore.PERMITTED_TYPE)
+    @Fluent
+    Neo4jClient delete(String query, Handler<AsyncResult<List<Record>>> resultHandler);
+
+    @GenIgnore(GenIgnore.PERMITTED_TYPE)
+    Future<List<Record>> delete(String query);
+
+    /**
+     * Executes and returns deleted results
+     *
+     * @param query  the cypher query
+     * @param parameters  the cypher parameters
+     * @param resultHandler  the handler to be called when the query has completed
+     * @return the current Neo4jClient instance
+     */
+    @GenIgnore(GenIgnore.PERMITTED_TYPE)
+    @Fluent
+    Neo4jClient delete(String query, Value parameters, Handler<AsyncResult<List<Record>>> resultHandler);
+
+    @GenIgnore(GenIgnore.PERMITTED_TYPE)
+    Future<List<Record>> delete(String query, Value parameters);
 
     /**
      * Finds exactly one record

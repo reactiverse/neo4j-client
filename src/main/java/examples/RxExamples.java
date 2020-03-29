@@ -16,10 +16,10 @@
 
 package examples;
 
+import io.reactiverse.neo4j.options.Neo4jClientOptions;
 import io.reactiverse.reactivex.neo4j.Neo4jClient;
 import io.reactivex.Completable;
 import io.reactivex.Single;
-import io.vertx.core.json.JsonObject;
 import io.vertx.docgen.Source;
 import io.vertx.reactivex.core.Vertx;
 import org.neo4j.driver.Record;
@@ -30,7 +30,7 @@ import java.util.List;
 @Source
 public class RxExamples {
 
-    public void sharedClient(Vertx vertx, JsonObject config) {
+    public void sharedClient(Vertx vertx, Neo4jClientOptions config) {
         Neo4jClient.createShared(vertx, config);
     }
 

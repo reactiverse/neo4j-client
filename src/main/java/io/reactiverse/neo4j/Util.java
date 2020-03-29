@@ -30,7 +30,7 @@ public final class Util {
     public static <T> void setHandler(Future<T> future, Handler<AsyncResult<T>> handler) {
         Objects.requireNonNull(future, "future must not be null");
         if (handler != null) {
-            future.setHandler(handler);
+            future.onComplete(handler);
         }
     }
 

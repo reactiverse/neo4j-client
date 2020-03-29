@@ -20,8 +20,8 @@ import io.reactiverse.neo4j.Neo4jClient;
 import io.reactiverse.neo4j.Neo4jRecordStream;
 import io.reactiverse.neo4j.Neo4jTransaction;
 import io.reactiverse.neo4j.VisibleForTesting;
+import io.reactiverse.neo4j.options.Neo4jClientOptions;
 import io.vertx.core.*;
-import io.vertx.core.json.JsonObject;
 import io.vertx.core.shareddata.LocalMap;
 import io.vertx.core.shareddata.Shareable;
 import org.neo4j.driver.*;
@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BinaryOperator;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static io.reactiverse.neo4j.Util.fromCompletionStage;
@@ -58,7 +59,7 @@ public class Neo4jClientImpl implements Neo4jClient {
 
     private static final Value EMPTY = Values.parameters();
 
-    public Neo4jClientImpl(Vertx vertx, JsonObject config, String dataSourceName) {
+    public Neo4jClientImpl(Vertx vertx, Neo4jClientOptions config, String dataSourceName) {
         requireNonNull(vertx);
         requireNonNull(config);
         requireNonNull(dataSourceName);
@@ -70,14 +71,12 @@ public class Neo4jClientImpl implements Neo4jClient {
 
     @Override
     public Neo4jClient execute(String query, Handler<AsyncResult<ResultSummary>> resultHandler) {
-        Future<ResultSummary> resultSummaryFuture = execute(query);
-        setHandler(resultSummaryFuture, resultHandler);
-        return this;
+        return execute(query, EMPTY, resultHandler);
     }
 
     @Override
     public Future<ResultSummary> execute(String query) {
-        return fromCompletionStage(executeWriteTransaction(query, EMPTY), vertx.getOrCreateContext());
+        return execute(query, EMPTY);
     }
 
     @Override
@@ -89,19 +88,39 @@ public class Neo4jClientImpl implements Neo4jClient {
 
     @Override
     public Future<ResultSummary> execute(String query, Value parameters) {
-        return fromCompletionStage(executeWriteTransaction(query, parameters), vertx.getOrCreateContext());
+        return fromCompletionStage(executeWriteTransaction(query, parameters, ResultCursor::consumeAsync), vertx.getOrCreateContext());
     }
 
     @Override
-    public Neo4jClient findOne(String query, Handler<AsyncResult<Record>> resultHandler) {
-        Future<Record> recordFuture = findOne(query, EMPTY);
-        setHandler(recordFuture, resultHandler);
+    public Neo4jClient delete(String query, Handler<AsyncResult<List<Record>>> resultHandler) {
+        return delete(query, EMPTY, resultHandler);
+    }
+
+    @Override
+    public Future<List<Record>> delete(String query) {
+        return delete(query, EMPTY);
+    }
+
+    @Override
+    public Neo4jClient delete(String query, Value parameters, Handler<AsyncResult<List<Record>>> resultHandler) {
+        Future<List<Record>> resultRecordFuture = delete(query, parameters);
+        setHandler(resultRecordFuture, resultHandler);
         return this;
     }
 
     @Override
+    public Future<List<Record>> delete(String query, Value parameters) {
+        return fromCompletionStage(executeWriteTransaction(query, parameters, ResultCursor::listAsync), vertx.getOrCreateContext());
+    }
+
+    @Override
+    public Neo4jClient findOne(String query, Handler<AsyncResult<Record>> resultHandler) {
+        return findOne(query, EMPTY, resultHandler);
+    }
+
+    @Override
     public Future<Record> findOne(String query) {
-        return fromCompletionStage(executeReadTransactionSingle(query, EMPTY), vertx.getOrCreateContext());
+        return findOne(query, EMPTY);
     }
 
     @Override
@@ -113,19 +132,17 @@ public class Neo4jClientImpl implements Neo4jClient {
 
     @Override
     public Future<Record> findOne(String query, Value parameters) {
-        return fromCompletionStage(executeReadTransactionSingle(query, parameters), vertx.getOrCreateContext());
+        return fromCompletionStage(executeReadTransaction(query, parameters, ResultCursor::singleAsync), vertx.getOrCreateContext());
     }
 
     @Override
     public Neo4jClient find(String query, Handler<AsyncResult<List<Record>>> resultHandler) {
-        Future<List<Record>> listFuture = find(query, EMPTY);
-        setHandler(listFuture, resultHandler);
-        return this;
+        return find(query, EMPTY, resultHandler);
     }
 
     @Override
     public Future<List<Record>> find(String query) {
-        return fromCompletionStage(executeReadTransaction(query, EMPTY), vertx.getOrCreateContext());
+        return find(query, EMPTY);
     }
 
     @Override
@@ -137,7 +154,7 @@ public class Neo4jClientImpl implements Neo4jClient {
 
     @Override
     public Future<List<Record>> find(String query, Value parameters) {
-        return fromCompletionStage(executeReadTransaction(query, parameters), vertx.getOrCreateContext());
+        return fromCompletionStage(executeReadTransaction(query, parameters, ResultCursor::listAsync), vertx.getOrCreateContext());
     }
 
     @Override
@@ -213,24 +230,17 @@ public class Neo4jClientImpl implements Neo4jClient {
         }), context);
     }
 
-    private CompletionStage<ResultSummary> executeWriteTransaction(String query, Value parameters) {
+    private <T> CompletionStage<T> executeWriteTransaction(String query, Value parameters, Function<ResultCursor, CompletionStage<T>> resultFunction) {
         AsyncSession session = driver.asyncSession(DEFAULT_WRITE_SESSION_CONFIG);
         return session.writeTransactionAsync(tx -> tx.runAsync(query, parameters)
-                .thenCompose(ResultCursor::consumeAsync))
+                .thenCompose(resultFunction))
                 .whenComplete((ignore, error) -> session.closeAsync());
     }
 
-    private CompletionStage<List<Record>> executeReadTransaction(String query, Value parameters) {
+    private <T> CompletionStage<T> executeReadTransaction(String query, Value parameters, Function<ResultCursor, CompletionStage<T>> resultFunction) {
         AsyncSession session = driver.asyncSession(DEFAULT_READ_SESSION_CONFIG);
         return session.readTransactionAsync(tx -> tx.runAsync(query, parameters)
-                .thenCompose(ResultCursor::listAsync))
-                .whenComplete((ignore, error) -> session.closeAsync());
-    }
-
-    private CompletionStage<Record> executeReadTransactionSingle(String query, Value parameters) {
-        AsyncSession session = driver.asyncSession(DEFAULT_READ_SESSION_CONFIG);
-        return session.readTransactionAsync(tx -> tx.runAsync(query, parameters)
-                .thenCompose(ResultCursor::singleAsync))
+                .thenCompose(resultFunction))
                 .whenComplete((ignore, error) -> session.closeAsync());
     }
 
@@ -257,11 +267,11 @@ public class Neo4jClientImpl implements Neo4jClient {
 
     private static class Neo4jHolder implements Shareable {
         Driver driver;
-        JsonObject config;
+        Neo4jClientOptions config;
         Runnable closeRunner;
         int refCount = 1;
 
-        Neo4jHolder(JsonObject config, Runnable closeRunner) {
+        Neo4jHolder(Neo4jClientOptions config, Runnable closeRunner) {
             this.config = config;
             this.closeRunner = closeRunner;
         }
@@ -269,7 +279,9 @@ public class Neo4jClientImpl implements Neo4jClient {
         synchronized Driver neo4jDriver() {
             if (driver == null) {
                 Supplier<Driver> driverSupplier = new DriverSupplier(config);
-                driver = driverSupplier.get();
+                Driver givenDriver = driverSupplier.get();
+                givenDriver.verifyConnectivity();
+                this.driver = givenDriver;
             }
 
             return driver;
@@ -291,7 +303,7 @@ public class Neo4jClientImpl implements Neo4jClient {
         }
     }
 
-    private Neo4jHolder lookupHolder(JsonObject config, String dataSourceName) {
+    private Neo4jHolder lookupHolder(Neo4jClientOptions config, String dataSourceName) {
         synchronized (vertx) {
             LocalMap<String, Neo4jHolder> map = vertx.sharedData().getLocalMap(NEO4J_CLIENT_MAP_NAME);
             Neo4jHolder theHolder = map.get(dataSourceName);
