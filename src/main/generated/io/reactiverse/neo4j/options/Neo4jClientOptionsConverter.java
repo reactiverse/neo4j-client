@@ -17,7 +17,7 @@ public class Neo4jClientOptionsConverter {
       switch (member.getKey()) {
         case "authOptions":
           if (member.getValue() instanceof JsonObject) {
-            obj.setAuthOptions(new io.reactiverse.neo4j.options.Neo4jClientAuthOptions((JsonObject)member.getValue()));
+            obj.setAuthOptions(new io.reactiverse.neo4j.options.Neo4jClientAuthOptions((io.vertx.core.json.JsonObject)member.getValue()));
           }
           break;
         case "clusterNodeURIs":
@@ -28,24 +28,24 @@ public class Neo4jClientOptionsConverter {
             });
           }
           break;
-        case "connectionAcquisitionTimeout":
+        case "connectionAcquisitionTimeoutMillis":
           if (member.getValue() instanceof Number) {
-            obj.setConnectionAcquisitionTimeout(((Number)member.getValue()).longValue());
+            obj.setConnectionAcquisitionTimeoutMillis(((Number)member.getValue()).longValue());
           }
           break;
-        case "driverMetricsEnabled":
+        case "encrypted":
           if (member.getValue() instanceof Boolean) {
-            obj.setDriverMetricsEnabled((Boolean)member.getValue());
-          }
-          break;
-        case "encryptionEnabled":
-          if (member.getValue() instanceof Boolean) {
-            obj.setEncryptionEnabled((Boolean)member.getValue());
+            obj.setEncrypted((Boolean)member.getValue());
           }
           break;
         case "encryptionOptions":
           if (member.getValue() instanceof JsonObject) {
-            obj.setEncryptionOptions(new io.reactiverse.neo4j.options.Neo4jClientEncryptionOptions((JsonObject)member.getValue()));
+            obj.setEncryptionOptions(new io.reactiverse.neo4j.options.Neo4jClientEncryptionOptions((io.vertx.core.json.JsonObject)member.getValue()));
+          }
+          break;
+        case "eventLoopThreads":
+          if (member.getValue() instanceof Number) {
+            obj.setEventLoopThreads(((Number)member.getValue()).intValue());
           }
           break;
         case "fetchSize":
@@ -58,9 +58,19 @@ public class Neo4jClientOptionsConverter {
             obj.setHost((String)member.getValue());
           }
           break;
+        case "idleTimeBeforeConnectionTest":
+          if (member.getValue() instanceof Number) {
+            obj.setIdleTimeBeforeConnectionTest(((Number)member.getValue()).longValue());
+          }
+          break;
         case "logLeakedSessions":
           if (member.getValue() instanceof Boolean) {
             obj.setLogLeakedSessions((Boolean)member.getValue());
+          }
+          break;
+        case "maxConnectionLifetimeMillis":
+          if (member.getValue() instanceof Number) {
+            obj.setMaxConnectionLifetimeMillis(((Number)member.getValue()).longValue());
           }
           break;
         case "maxConnectionPoolSize":
@@ -68,9 +78,9 @@ public class Neo4jClientOptionsConverter {
             obj.setMaxConnectionPoolSize(((Number)member.getValue()).intValue());
           }
           break;
-        case "numberOfEventLoopThreads":
-          if (member.getValue() instanceof Number) {
-            obj.setNumberOfEventLoopThreads(((Number)member.getValue()).intValue());
+        case "metricsEnabled":
+          if (member.getValue() instanceof Boolean) {
+            obj.setMetricsEnabled((Boolean)member.getValue());
           }
           break;
         case "port":
@@ -95,19 +105,21 @@ public class Neo4jClientOptionsConverter {
       obj.getClusterNodeURIs().forEach(item -> array.add(item));
       json.put("clusterNodeURIs", array);
     }
-    json.put("connectionAcquisitionTimeout", obj.getConnectionAcquisitionTimeout());
-    json.put("driverMetricsEnabled", obj.isDriverMetricsEnabled());
-    json.put("encryptionEnabled", obj.isEncryptionEnabled());
+    json.put("connectionAcquisitionTimeoutMillis", obj.getConnectionAcquisitionTimeoutMillis());
+    json.put("encrypted", obj.isEncrypted());
     if (obj.getEncryptionOptions() != null) {
       json.put("encryptionOptions", obj.getEncryptionOptions().toJson());
     }
+    json.put("eventLoopThreads", obj.getEventLoopThreads());
     json.put("fetchSize", obj.getFetchSize());
     if (obj.getHost() != null) {
       json.put("host", obj.getHost());
     }
+    json.put("idleTimeBeforeConnectionTest", obj.getIdleTimeBeforeConnectionTest());
     json.put("logLeakedSessions", obj.isLogLeakedSessions());
+    json.put("maxConnectionLifetimeMillis", obj.getMaxConnectionLifetimeMillis());
     json.put("maxConnectionPoolSize", obj.getMaxConnectionPoolSize());
-    json.put("numberOfEventLoopThreads", obj.getNumberOfEventLoopThreads());
+    json.put("metricsEnabled", obj.isMetricsEnabled());
     json.put("port", obj.getPort());
   }
 }

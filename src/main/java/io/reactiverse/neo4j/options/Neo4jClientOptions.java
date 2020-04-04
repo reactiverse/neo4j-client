@@ -45,12 +45,14 @@ public class Neo4jClientOptions {
     private Set<String> clusterNodeURIs;
 
     private int maxConnectionPoolSize;
-    private long connectionAcquisitionTimeout;
-    private int numberOfEventLoopThreads;
+    private long connectionAcquisitionTimeoutMillis;
+    private long idleTimeBeforeConnectionTest;
+    private long maxConnectionLifetimeMillis;
+    private int eventLoopThreads;
     private boolean logLeakedSessions;
     private long fetchSize;
-    private boolean encryptionEnabled;
-    private boolean driverMetricsEnabled;
+    private boolean encrypted;
+    private boolean isMetricsEnabled;
 
     // auth parameters
     private Neo4jClientAuthOptions authOptions;
@@ -81,15 +83,17 @@ public class Neo4jClientOptions {
         port = DEFAULT_SINGLE_NODE_PORT;
         clusterNodeURIs = new HashSet<>();
         maxConnectionPoolSize = DEFAULT_CONFIG.maxConnectionPoolSize();
-        connectionAcquisitionTimeout = DEFAULT_CONFIG.connectionAcquisitionTimeoutMillis();
-        numberOfEventLoopThreads = DEFAULT_CONFIG.eventLoopThreads();
+        connectionAcquisitionTimeoutMillis = DEFAULT_CONFIG.connectionAcquisitionTimeoutMillis();
+        eventLoopThreads = DEFAULT_CONFIG.eventLoopThreads();
         logLeakedSessions = DEFAULT_CONFIG.logLeakedSessions();
         fetchSize = DEFAULT_CONFIG.fetchSize();
-        encryptionEnabled = DEFAULT_CONFIG.encrypted();
-        driverMetricsEnabled = DEFAULT_CONFIG.isMetricsEnabled();
+        encrypted = DEFAULT_CONFIG.encrypted();
+        isMetricsEnabled = DEFAULT_CONFIG.isMetricsEnabled();
+        idleTimeBeforeConnectionTest = DEFAULT_CONFIG.idleTimeBeforeConnectionTest();
+        maxConnectionLifetimeMillis = DEFAULT_CONFIG.maxConnectionLifetimeMillis();
         authOptions = new Neo4jClientAuthOptions();
         encryptionOptions = new Neo4jClientEncryptionOptions();
-        builder.withLogging(Logging.slf4j()); // TODO : support other loggers
+        builder.withLogging(Logging.slf4j()); // TODO : support other loggers ?
     }
 
     public Config neo4jConfig() {
@@ -146,23 +150,43 @@ public class Neo4jClientOptions {
         return this;
     }
 
-    public long getConnectionAcquisitionTimeout() {
-        return connectionAcquisitionTimeout;
+    public long getConnectionAcquisitionTimeoutMillis() {
+        return connectionAcquisitionTimeoutMillis;
     }
 
-    public Neo4jClientOptions setConnectionAcquisitionTimeout(long connectionAcquisitionTimeout) {
-        this.connectionAcquisitionTimeout = connectionAcquisitionTimeout;
-        builder.withConnectionAcquisitionTimeout(connectionAcquisitionTimeout, TimeUnit.MILLISECONDS);
+    public Neo4jClientOptions setConnectionAcquisitionTimeoutMillis(long connectionAcquisitionTimeoutMillis) {
+        this.connectionAcquisitionTimeoutMillis = connectionAcquisitionTimeoutMillis;
+        builder.withConnectionAcquisitionTimeout(connectionAcquisitionTimeoutMillis, TimeUnit.MILLISECONDS);
         return this;
     }
 
-    public int getNumberOfEventLoopThreads() {
-        return numberOfEventLoopThreads;
+    public long getMaxConnectionLifetimeMillis() {
+        return maxConnectionLifetimeMillis;
     }
 
-    public Neo4jClientOptions setNumberOfEventLoopThreads(int numberOfEventLoopThreads) {
-        this.numberOfEventLoopThreads = numberOfEventLoopThreads;
-        builder.withEventLoopThreads(numberOfEventLoopThreads);
+    public Neo4jClientOptions setMaxConnectionLifetimeMillis(long maxConnectionLifetimeMillis) {
+        this.maxConnectionLifetimeMillis = maxConnectionLifetimeMillis;
+        builder.withMaxConnectionLifetime(maxConnectionLifetimeMillis, TimeUnit.MILLISECONDS);
+        return this;
+    }
+
+    public long getIdleTimeBeforeConnectionTest() {
+        return idleTimeBeforeConnectionTest;
+    }
+
+    public Neo4jClientOptions setIdleTimeBeforeConnectionTest(long idleTimeBeforeConnectionTest) {
+        this.idleTimeBeforeConnectionTest = idleTimeBeforeConnectionTest;
+        builder.withConnectionLivenessCheckTimeout(idleTimeBeforeConnectionTest, TimeUnit.MILLISECONDS);
+        return this;
+    }
+
+    public int getEventLoopThreads() {
+        return eventLoopThreads;
+    }
+
+    public Neo4jClientOptions setEventLoopThreads(int eventLoopThreads) {
+        this.eventLoopThreads = eventLoopThreads;
+        builder.withEventLoopThreads(eventLoopThreads);
         return this;
     }
 
@@ -186,12 +210,12 @@ public class Neo4jClientOptions {
         return this;
     }
 
-    public boolean isEncryptionEnabled() {
-        return encryptionEnabled;
+    public boolean isEncrypted() {
+        return encrypted;
     }
 
-    public Neo4jClientOptions setEncryptionEnabled(boolean enabled) {
-        this.encryptionEnabled = enabled;
+    public Neo4jClientOptions setEncrypted(boolean enabled) {
+        this.encrypted = enabled;
         if (enabled) {
             builder.withEncryption();
         } else {
@@ -200,12 +224,12 @@ public class Neo4jClientOptions {
         return this;
     }
 
-    public boolean isDriverMetricsEnabled() {
-        return driverMetricsEnabled;
+    public boolean isMetricsEnabled() {
+        return isMetricsEnabled;
     }
 
-    public Neo4jClientOptions setDriverMetricsEnabled(boolean enabled) {
-        this.driverMetricsEnabled = enabled;
+    public Neo4jClientOptions setMetricsEnabled(boolean enabled) {
+        this.isMetricsEnabled = enabled;
         if (enabled) {
             builder.withDriverMetrics();
         } else {
