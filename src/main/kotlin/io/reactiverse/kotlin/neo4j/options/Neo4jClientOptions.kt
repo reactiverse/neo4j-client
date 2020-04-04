@@ -22,15 +22,17 @@ import io.reactiverse.neo4j.options.Neo4jClientEncryptionOptions
 fun neo4jClientOptionsOf(
   authOptions: io.reactiverse.neo4j.options.Neo4jClientAuthOptions? = null,
   clusterNodeURIs: Iterable<String>? = null,
-  connectionAcquisitionTimeout: Long? = null,
-  driverMetricsEnabled: Boolean? = null,
-  encryptionEnabled: Boolean? = null,
+  connectionAcquisitionTimeoutMillis: Long? = null,
+  encrypted: Boolean? = null,
   encryptionOptions: io.reactiverse.neo4j.options.Neo4jClientEncryptionOptions? = null,
+  eventLoopThreads: Int? = null,
   fetchSize: Long? = null,
   host: String? = null,
+  idleTimeBeforeConnectionTest: Long? = null,
   logLeakedSessions: Boolean? = null,
+  maxConnectionLifetimeMillis: Long? = null,
   maxConnectionPoolSize: Int? = null,
-  numberOfEventLoopThreads: Int? = null,
+  metricsEnabled: Boolean? = null,
   port: Int? = null): Neo4jClientOptions = io.reactiverse.neo4j.options.Neo4jClientOptions().apply {
 
   if (authOptions != null) {
@@ -41,17 +43,17 @@ fun neo4jClientOptionsOf(
       this.addClusterNodeURI(item)
     }
   }
-  if (connectionAcquisitionTimeout != null) {
-    this.setConnectionAcquisitionTimeout(connectionAcquisitionTimeout)
+  if (connectionAcquisitionTimeoutMillis != null) {
+    this.setConnectionAcquisitionTimeoutMillis(connectionAcquisitionTimeoutMillis)
   }
-  if (driverMetricsEnabled != null) {
-    this.setDriverMetricsEnabled(driverMetricsEnabled)
-  }
-  if (encryptionEnabled != null) {
-    this.setEncryptionEnabled(encryptionEnabled)
+  if (encrypted != null) {
+    this.setEncrypted(encrypted)
   }
   if (encryptionOptions != null) {
     this.setEncryptionOptions(encryptionOptions)
+  }
+  if (eventLoopThreads != null) {
+    this.setEventLoopThreads(eventLoopThreads)
   }
   if (fetchSize != null) {
     this.setFetchSize(fetchSize)
@@ -59,14 +61,20 @@ fun neo4jClientOptionsOf(
   if (host != null) {
     this.setHost(host)
   }
+  if (idleTimeBeforeConnectionTest != null) {
+    this.setIdleTimeBeforeConnectionTest(idleTimeBeforeConnectionTest)
+  }
   if (logLeakedSessions != null) {
     this.setLogLeakedSessions(logLeakedSessions)
+  }
+  if (maxConnectionLifetimeMillis != null) {
+    this.setMaxConnectionLifetimeMillis(maxConnectionLifetimeMillis)
   }
   if (maxConnectionPoolSize != null) {
     this.setMaxConnectionPoolSize(maxConnectionPoolSize)
   }
-  if (numberOfEventLoopThreads != null) {
-    this.setNumberOfEventLoopThreads(numberOfEventLoopThreads)
+  if (metricsEnabled != null) {
+    this.setMetricsEnabled(metricsEnabled)
   }
   if (port != null) {
     this.setPort(port)
@@ -75,20 +83,22 @@ fun neo4jClientOptionsOf(
 
 @Deprecated(
   message = "This function will be removed in a future version",
-  replaceWith = ReplaceWith("neo4jClientOptionsOf(authOptions, clusterNodeURIs, connectionAcquisitionTimeout, driverMetricsEnabled, encryptionEnabled, encryptionOptions, fetchSize, host, logLeakedSessions, maxConnectionPoolSize, numberOfEventLoopThreads, port)")
+  replaceWith = ReplaceWith("neo4jClientOptionsOf(authOptions, clusterNodeURIs, connectionAcquisitionTimeoutMillis, encrypted, encryptionOptions, eventLoopThreads, fetchSize, host, idleTimeBeforeConnectionTest, logLeakedSessions, maxConnectionLifetimeMillis, maxConnectionPoolSize, metricsEnabled, port)")
 )
 fun Neo4jClientOptions(
   authOptions: io.reactiverse.neo4j.options.Neo4jClientAuthOptions? = null,
   clusterNodeURIs: Iterable<String>? = null,
-  connectionAcquisitionTimeout: Long? = null,
-  driverMetricsEnabled: Boolean? = null,
-  encryptionEnabled: Boolean? = null,
+  connectionAcquisitionTimeoutMillis: Long? = null,
+  encrypted: Boolean? = null,
   encryptionOptions: io.reactiverse.neo4j.options.Neo4jClientEncryptionOptions? = null,
+  eventLoopThreads: Int? = null,
   fetchSize: Long? = null,
   host: String? = null,
+  idleTimeBeforeConnectionTest: Long? = null,
   logLeakedSessions: Boolean? = null,
+  maxConnectionLifetimeMillis: Long? = null,
   maxConnectionPoolSize: Int? = null,
-  numberOfEventLoopThreads: Int? = null,
+  metricsEnabled: Boolean? = null,
   port: Int? = null): Neo4jClientOptions = io.reactiverse.neo4j.options.Neo4jClientOptions().apply {
 
   if (authOptions != null) {
@@ -99,17 +109,17 @@ fun Neo4jClientOptions(
       this.addClusterNodeURI(item)
     }
   }
-  if (connectionAcquisitionTimeout != null) {
-    this.setConnectionAcquisitionTimeout(connectionAcquisitionTimeout)
+  if (connectionAcquisitionTimeoutMillis != null) {
+    this.setConnectionAcquisitionTimeoutMillis(connectionAcquisitionTimeoutMillis)
   }
-  if (driverMetricsEnabled != null) {
-    this.setDriverMetricsEnabled(driverMetricsEnabled)
-  }
-  if (encryptionEnabled != null) {
-    this.setEncryptionEnabled(encryptionEnabled)
+  if (encrypted != null) {
+    this.setEncrypted(encrypted)
   }
   if (encryptionOptions != null) {
     this.setEncryptionOptions(encryptionOptions)
+  }
+  if (eventLoopThreads != null) {
+    this.setEventLoopThreads(eventLoopThreads)
   }
   if (fetchSize != null) {
     this.setFetchSize(fetchSize)
@@ -117,14 +127,20 @@ fun Neo4jClientOptions(
   if (host != null) {
     this.setHost(host)
   }
+  if (idleTimeBeforeConnectionTest != null) {
+    this.setIdleTimeBeforeConnectionTest(idleTimeBeforeConnectionTest)
+  }
   if (logLeakedSessions != null) {
     this.setLogLeakedSessions(logLeakedSessions)
+  }
+  if (maxConnectionLifetimeMillis != null) {
+    this.setMaxConnectionLifetimeMillis(maxConnectionLifetimeMillis)
   }
   if (maxConnectionPoolSize != null) {
     this.setMaxConnectionPoolSize(maxConnectionPoolSize)
   }
-  if (numberOfEventLoopThreads != null) {
-    this.setNumberOfEventLoopThreads(numberOfEventLoopThreads)
+  if (metricsEnabled != null) {
+    this.setMetricsEnabled(metricsEnabled)
   }
   if (port != null) {
     this.setPort(port)

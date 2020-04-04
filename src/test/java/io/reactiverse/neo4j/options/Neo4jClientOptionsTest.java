@@ -9,8 +9,7 @@ import org.neo4j.driver.Logging;
 import static io.reactiverse.neo4j.options.Neo4jClientOptions.DEFAULT_SINGLE_NODE_HOST;
 import static io.reactiverse.neo4j.options.Neo4jClientOptions.DEFAULT_SINGLE_NODE_PORT;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.neo4j.driver.internal.async.pool.PoolSettings.DEFAULT_CONNECTION_ACQUISITION_TIMEOUT;
-import static org.neo4j.driver.internal.async.pool.PoolSettings.DEFAULT_MAX_CONNECTION_POOL_SIZE;
+import static org.neo4j.driver.internal.async.pool.PoolSettings.*;
 import static org.neo4j.driver.internal.handlers.pulln.FetchSizeUtil.DEFAULT_FETCH_SIZE;
 
 public class Neo4jClientOptionsTest {
@@ -26,12 +25,14 @@ public class Neo4jClientOptionsTest {
         assertThat(options.getAuthOptions()).isNotNull();
         assertThat(options.getEncryptionOptions()).isNotNull();
         assertThat(options.isLogLeakedSessions()).isFalse();
-        assertThat(options.isEncryptionEnabled()).isFalse();
-        assertThat(options.isDriverMetricsEnabled()).isFalse();
-        assertThat(options.getConnectionAcquisitionTimeout()).isEqualTo(DEFAULT_CONNECTION_ACQUISITION_TIMEOUT);
+        assertThat(options.isEncrypted()).isFalse();
+        assertThat(options.isMetricsEnabled()).isFalse();
+        assertThat(options.getConnectionAcquisitionTimeoutMillis()).isEqualTo(DEFAULT_CONNECTION_ACQUISITION_TIMEOUT);
         assertThat(options.getMaxConnectionPoolSize()).isEqualTo(DEFAULT_MAX_CONNECTION_POOL_SIZE);
         assertThat(options.getFetchSize()).isEqualTo(DEFAULT_FETCH_SIZE);
-        assertThat(options.getNumberOfEventLoopThreads()).isEqualTo(0);
+        assertThat(options.getMaxConnectionLifetimeMillis()).isEqualTo(DEFAULT_MAX_CONNECTION_LIFETIME);
+        assertThat(options.getIdleTimeBeforeConnectionTest()).isEqualTo(DEFAULT_IDLE_TIME_BEFORE_CONNECTION_TEST);
+        assertThat(options.getEventLoopThreads()).isEqualTo(0);
     }
 
     @Test public void should_check_default_neo4j_config() {
@@ -42,15 +43,17 @@ public class Neo4jClientOptionsTest {
         Config config = options.neo4jConfig();
 
         // Then
-        assertThat(config.isMetricsEnabled()).isEqualTo(options.isDriverMetricsEnabled());
+        assertThat(config.isMetricsEnabled()).isEqualTo(options.isMetricsEnabled());
         assertThat(config.trustStrategy()).isNotNull();
-        assertThat(config.encrypted()).isEqualTo(options.isEncryptionEnabled());
+        assertThat(config.encrypted()).isEqualTo(options.isEncrypted());
         assertThat(config.fetchSize()).isEqualTo(options.getFetchSize());
         assertThat(config.logLeakedSessions()).isEqualTo(options.isLogLeakedSessions());
-        assertThat(config.eventLoopThreads()).isEqualTo(options.getNumberOfEventLoopThreads());
+        assertThat(config.eventLoopThreads()).isEqualTo(options.getEventLoopThreads());
         assertThat(config.maxConnectionPoolSize()).isEqualTo(options.getMaxConnectionPoolSize());
         assertThat(config.logging()).isInstanceOf(Logging.slf4j().getClass());
-        assertThat(config.connectionAcquisitionTimeoutMillis()).isEqualTo(options.getConnectionAcquisitionTimeout());
+        assertThat(config.connectionAcquisitionTimeoutMillis()).isEqualTo(options.getConnectionAcquisitionTimeoutMillis());
+        assertThat(config.maxConnectionLifetimeMillis()).isEqualTo(options.getMaxConnectionLifetimeMillis());
+        assertThat(config.idleTimeBeforeConnectionTest()).isEqualTo(options.getIdleTimeBeforeConnectionTest());
     }
 
     @Test public void should_have_specific_configuration() {
@@ -58,13 +61,15 @@ public class Neo4jClientOptionsTest {
         Neo4jClientOptions options = new Neo4jClientOptions()
                 .setHost("12.4.5.6")
                 .setPort(9999)
-                .setEncryptionEnabled(true)
+                .setEncrypted(true)
                 .setLogLeakedSessions(true)
-                .setConnectionAcquisitionTimeout(5000)
-                .setDriverMetricsEnabled(true)
+                .setConnectionAcquisitionTimeoutMillis(5000)
+                .setMaxConnectionLifetimeMillis(8000)
+                .setIdleTimeBeforeConnectionTest(7000)
+                .setMetricsEnabled(true)
                 .setFetchSize(5000)
                 .setMaxConnectionPoolSize(200)
-                .setNumberOfEventLoopThreads(12)
+                .setEventLoopThreads(12)
                 .addClusterNodeURI("bolt+routing://198.67.88.11:8888")
                 .addClusterNodeURI("bolt+routing://177.66.1.2:7777")
                 .setAuthOptions(new Neo4jClientAuthOptions())
@@ -78,12 +83,14 @@ public class Neo4jClientOptionsTest {
         assertThat(options.getEncryptionOptions()).isNotNull();
         assertThat(options.getEncryptionOptions()).isNotNull();
         assertThat(options.isLogLeakedSessions()).isTrue();
-        assertThat(options.isEncryptionEnabled()).isTrue();
-        assertThat(options.isDriverMetricsEnabled()).isTrue();
-        assertThat(options.getConnectionAcquisitionTimeout()).isEqualTo(5000);
+        assertThat(options.isEncrypted()).isTrue();
+        assertThat(options.isMetricsEnabled()).isTrue();
+        assertThat(options.getConnectionAcquisitionTimeoutMillis()).isEqualTo(5000);
+        assertThat(options.getMaxConnectionLifetimeMillis()).isEqualTo(8000);
+        assertThat(options.getIdleTimeBeforeConnectionTest()).isEqualTo(7000);
         assertThat(options.getMaxConnectionPoolSize()).isEqualTo(200);
         assertThat(options.getFetchSize()).isEqualTo(5000);
-        assertThat(options.getNumberOfEventLoopThreads()).isEqualTo(12);
+        assertThat(options.getEventLoopThreads()).isEqualTo(12);
     }
 
     @Test public void should_convert_to_json() {
@@ -91,13 +98,15 @@ public class Neo4jClientOptionsTest {
         Neo4jClientOptions options = new Neo4jClientOptions()
                 .setHost("12.4.5.6")
                 .setPort(9999)
-                .setEncryptionEnabled(true)
+                .setEncrypted(true)
                 .setLogLeakedSessions(true)
-                .setConnectionAcquisitionTimeout(5000)
-                .setDriverMetricsEnabled(true)
+                .setConnectionAcquisitionTimeoutMillis(5000)
+                .setMaxConnectionLifetimeMillis(8000)
+                .setIdleTimeBeforeConnectionTest(7000)
+                .setMetricsEnabled(true)
                 .setFetchSize(6000)
                 .setMaxConnectionPoolSize(200)
-                .setNumberOfEventLoopThreads(12)
+                .setEventLoopThreads(12)
                 .addClusterNodeURI("bolt+routing://198.67.88.11:8888")
                 .addClusterNodeURI("bolt+routing://177.66.1.2:7777")
                 .setAuthOptions(new Neo4jClientAuthOptions())
@@ -109,13 +118,15 @@ public class Neo4jClientOptionsTest {
         // Then
         assertThat(jsonObject.getString("host")).isEqualTo("12.4.5.6");
         assertThat(jsonObject.getInteger("port")).isEqualTo(9999);
-        assertThat(jsonObject.getBoolean("encryptionEnabled")).isTrue();
+        assertThat(jsonObject.getBoolean("encrypted")).isTrue();
         assertThat(jsonObject.getBoolean("logLeakedSessions")).isTrue();
-        assertThat(jsonObject.getLong("connectionAcquisitionTimeout")).isEqualTo(5000);
-        assertThat(jsonObject.getBoolean("driverMetricsEnabled")).isTrue();
+        assertThat(jsonObject.getLong("connectionAcquisitionTimeoutMillis")).isEqualTo(5000);
+        assertThat(jsonObject.getLong("maxConnectionLifetimeMillis")).isEqualTo(8000);
+        assertThat(jsonObject.getLong("idleTimeBeforeConnectionTest")).isEqualTo(7000);
+        assertThat(jsonObject.getBoolean("metricsEnabled")).isTrue();
         assertThat(jsonObject.getLong("fetchSize")).isEqualTo(6000);
         assertThat(jsonObject.getInteger("maxConnectionPoolSize")).isEqualTo(200);
-        assertThat(jsonObject.getInteger("numberOfEventLoopThreads")).isEqualTo(12);
+        assertThat(jsonObject.getInteger("eventLoopThreads")).isEqualTo(12);
         assertThat(jsonObject.getJsonArray("clusterNodeURIs")).containsExactlyInAnyOrder("bolt+routing://198.67.88.11:8888", "bolt+routing://177.66.1.2:7777");
         assertThat(jsonObject.getJsonObject("authOptions")).isNotNull();
         assertThat(jsonObject.getJsonObject("encryptionOptions")).isNotNull();
@@ -126,13 +137,15 @@ public class Neo4jClientOptionsTest {
         JsonObject jsonObject = new JsonObject()
             .put("host", "12.4.5.6")
             .put("port", 9999)
-            .put("encryptionEnabled", true)
+            .put("encrypted", true)
             .put("logLeakedSessions", true)
-            .put("connectionAcquisitionTimeout", 5000)
-            .put("driverMetricsEnabled", true)
+            .put("connectionAcquisitionTimeoutMillis", 5000)
+            .put("maxConnectionLifetimeMillis", 8000)
+            .put("idleTimeBeforeConnectionTest", 7000)
+            .put("metricsEnabled", true)
             .put("fetchSize", 6000)
             .put("maxConnectionPoolSize", 200)
-            .put("numberOfEventLoopThreads", 12)
+            .put("eventLoopThreads", 12)
             .put("clusterNodeURIs", new JsonArray().add("bolt+routing://198.67.88.11:8888").add("bolt+routing://177.66.1.2:7777"))
             .put("authOptions", new JsonObject())
             .put("encryptionOptions", new JsonObject());
@@ -148,11 +161,13 @@ public class Neo4jClientOptionsTest {
         assertThat(options.getEncryptionOptions()).isNotNull();
         assertThat(options.getEncryptionOptions()).isNotNull();
         assertThat(options.isLogLeakedSessions()).isTrue();
-        assertThat(options.isEncryptionEnabled()).isTrue();
-        assertThat(options.isDriverMetricsEnabled()).isTrue();
-        assertThat(options.getConnectionAcquisitionTimeout()).isEqualTo(5000);
+        assertThat(options.isEncrypted()).isTrue();
+        assertThat(options.isMetricsEnabled()).isTrue();
+        assertThat(options.getConnectionAcquisitionTimeoutMillis()).isEqualTo(5000);
+        assertThat(options.getMaxConnectionLifetimeMillis()).isEqualTo(8000);
+        assertThat(options.getIdleTimeBeforeConnectionTest()).isEqualTo(7000);
         assertThat(options.getMaxConnectionPoolSize()).isEqualTo(200);
         assertThat(options.getFetchSize()).isEqualTo(6000);
-        assertThat(options.getNumberOfEventLoopThreads()).isEqualTo(12);
+        assertThat(options.getEventLoopThreads()).isEqualTo(12);
     }
 }

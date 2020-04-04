@@ -39,15 +39,17 @@
 ^|Name | Type ^| Description
 |[[authOptions]]`@authOptions`|`link:dataobjects.html#Neo4jClientAuthOptions[Neo4jClientAuthOptions]`|-
 |[[clusterNodeURIs]]`@clusterNodeURIs`|`Array of String`|-
-|[[connectionAcquisitionTimeout]]`@connectionAcquisitionTimeout`|`Number (long)`|-
-|[[driverMetricsEnabled]]`@driverMetricsEnabled`|`Boolean`|-
-|[[encryptionEnabled]]`@encryptionEnabled`|`Boolean`|-
+|[[connectionAcquisitionTimeoutMillis]]`@connectionAcquisitionTimeoutMillis`|`Number (long)`|-
+|[[encrypted]]`@encrypted`|`Boolean`|-
 |[[encryptionOptions]]`@encryptionOptions`|`link:dataobjects.html#Neo4jClientEncryptionOptions[Neo4jClientEncryptionOptions]`|-
+|[[eventLoopThreads]]`@eventLoopThreads`|`Number (int)`|-
 |[[fetchSize]]`@fetchSize`|`Number (long)`|-
 |[[host]]`@host`|`String`|-
+|[[idleTimeBeforeConnectionTest]]`@idleTimeBeforeConnectionTest`|`Number (long)`|-
 |[[logLeakedSessions]]`@logLeakedSessions`|`Boolean`|-
+|[[maxConnectionLifetimeMillis]]`@maxConnectionLifetimeMillis`|`Number (long)`|-
 |[[maxConnectionPoolSize]]`@maxConnectionPoolSize`|`Number (int)`|-
-|[[numberOfEventLoopThreads]]`@numberOfEventLoopThreads`|`Number (int)`|-
+|[[metricsEnabled]]`@metricsEnabled`|`Boolean`|-
 |[[port]]`@port`|`Number (int)`|-
 |===
 
