@@ -16,6 +16,8 @@
 package io.reactiverse.kotlin.neo4j.options
 
 import io.reactiverse.neo4j.options.Neo4jClientOptions
+import io.reactiverse.neo4j.options.Neo4jClientAuthOptions
+import io.reactiverse.neo4j.options.Neo4jClientEncryptionOptions
 
 fun neo4jClientOptionsOf(
   authOptions: io.reactiverse.neo4j.options.Neo4jClientAuthOptions? = null,

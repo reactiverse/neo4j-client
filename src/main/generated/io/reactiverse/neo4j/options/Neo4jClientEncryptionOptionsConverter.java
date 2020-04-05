@@ -1,6 +1,9 @@
 package io.reactiverse.neo4j.options;
 
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.json.JsonArray;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 
 /**
  * Converter for {@link io.reactiverse.neo4j.options.Neo4jClientEncryptionOptions}.

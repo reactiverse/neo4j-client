@@ -15,8 +15,8 @@
  */
 package io.reactiverse.kotlin.neo4j.options
 
-import io.reactiverse.neo4j.options.AuthSchemeOption
 import io.reactiverse.neo4j.options.Neo4jClientAuthOptions
+import io.reactiverse.neo4j.options.AuthSchemeOption
 
 fun neo4jClientAuthOptionsOf(
   authScheme: AuthSchemeOption? = null,
