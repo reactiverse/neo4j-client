@@ -14,3 +14,21 @@ Before running tests directly in **Intellij Idea**, please, ensure you have disa
 passing JUnit _argLine_ setting at **Build, Execution, Deployment** >
 **Build Tools** > **Maven** > **Running Tests**:
 ![image](https://user-images.githubusercontent.com/16746106/71311902-9206b080-2435-11ea-8278-b249e0c7a22b.png)
+
+## Legal
+
+Originally developped by [Olympe S.A.](https://olympe.ch/)
+
+    Copyright (c) 2018-2020 Olympe S.A.
+    
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+    
+        http://www.apache.org/licenses/LICENSE-2.0
+    
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
