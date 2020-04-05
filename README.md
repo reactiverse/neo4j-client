@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/eclipse-vertx/vert.x.svg?branch=master)](https://travis-ci.org/eclipse-vertx/vert.x)
+
 # Vert.x Neo4j client
 
 The Vert.x Neo4j client is an extension for interacting with [Neo4j](https://neo4j.com/neo4j-graph-database/).
