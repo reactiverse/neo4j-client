@@ -48,6 +48,11 @@ public class Neo4jClientOptionsConverter {
             obj.setEventLoopThreads(((Number)member.getValue()).intValue());
           }
           break;
+        case "eventLoopThreads":
+          if (member.getValue() instanceof Number) {
+            obj.setEventLoopThreads(((Number)member.getValue()).intValue());
+          }
+          break;
         case "fetchSize":
           if (member.getValue() instanceof Number) {
             obj.setFetchSize(((Number)member.getValue()).longValue());
