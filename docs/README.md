@@ -40,9 +40,7 @@ implementation("io.reactiverse:neo4j-client:0.2.0")
 Initialize the client:
 
 ```java
-Neo4jClientOptions options = new Neo4jClientOptions()
-                                    .setHost("localhost")
-                                    .setPort(7687)
+Neo4jClientOptions options = new Neo4jClientOptions().setHost("localhost").setPort(7687);
 Neo4jClient neo4jClient = Neo4jClient.createShared(vertx, options);
 ```
 
