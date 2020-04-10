@@ -8,7 +8,7 @@ jobs:
     - stage: test
       name: "OpenJDK 8"
       jdk: openjdk8
-      script: mvn -q clean verify -B
+      script: mvn -q clean verify -B -Pintegration
 #    - if: type != pull_request
 #      name: "OpenJDK 11"
 #      jdk: openjdk11
