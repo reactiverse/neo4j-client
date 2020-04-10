@@ -4,9 +4,65 @@
 
 The Vert.x Neo4j client is an extension for interacting with [Neo4j](https://neo4j.com/neo4j-graph-database/).
 
-The client is built on top of [Neo4j Java Driver](https://github.com/neo4j/neo4j-java-driver).
+The client is built on top of official [Neo4j Java Driver](https://github.com/neo4j/neo4j-java-driver).
 
 WARNING: This module has Tech Preview status, this means the API can change between versions.
+
+## Javadoc
+
+The [Javadoc](./javadoc/index.html).
+
+## Install
+
+Using maven:
+```
+<dependency>
+    <groupId>io.reactiverse</groupId>
+    <artifactId>neo4j-client</artifactId>
+    <version>0.2.0</version>
+</dependency>
+```
+
+Using Gradle:
+```
+implementation("io.reactiverse:neo4j-client:0.2.0")
+```
+
+## Sample usage
+
+Initialize the client:
+
+```java
+Neo4jClientOptions options = new Neo4jClientOptions()
+                                    .setHost("localhost")
+                                    .setPort(7687)
+Neo4jClient neo4jClient = Neo4jClient.createShared(vertx, options);
+```
+
+Here is a sample usage with Java API where we ask to retrieve a list of friends:
+
+```java
+neo4jClient.find("MATCH (you {name:'You'})-[:FRIEND]->(yourFriends) RETURN yourFriends", find -> {
+    if (find.succeeded()) {
+        List<Record> result = find.result();
+        // handle result
+    } else {
+        Throwable error = find.cause();
+        // handle error
+    }
+});
+```
+
+And here is the RxJava 2 API equivalent:
+
+```java
+neo4jClient
+    .rxFind("MATCH (you {name:'You'})-[:FRIEND]->(yourFriends) RETURN yourFriends")
+    .subscribe(result -> {
+        // handle result
+    }, error -> {
+        // handle error
+    });
 
 ## Running tests in IntelliJ Idea
 
@@ -17,7 +73,7 @@ passing JUnit _argLine_ setting at **Build, Execution, Deployment** >
 
 ## Legal
 
-Originally developped by [Olympe S.A.](https://olympe.ch/)
+Originally developed by [Olympe S.A.](https://olympe.ch/)
 
     Copyright (c) 2018-2020 Olympe S.A.
     
