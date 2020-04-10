@@ -279,7 +279,9 @@
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <configuration>
                     <additionalparam>-Xdoclint:none</additionalparam>
-                    <sourcepath>${project.build.sourceDirectory};${project.build.directory}/generated-sources/annotations</sourcepath>
+                    <additionalJOption>-J-Dhttp.agent=maven-javadoc-plugin-neo4j-client</additionalJOption>
+                    <sourcepath>${project.build.sourceDirectory};${project.build.directory}/generated-sources/codegen</sourcepath>
+                    <destDir>${basedir}/docs/javadoc</destDir>
                     <sourceFileIncludes>
                         <sourceFileInclude>io/reactiverse/**/*.java</sourceFileInclude>
                     </sourceFileIncludes>
@@ -291,13 +293,10 @@
                     <detectLinks />
                     <detectJavaApiLink />
                     <links>
-                        <link>http://vertx.io/docs/apidocs/</link>
-                        <link>https://neo4j.com/docs/api/java-driver/current/</link>
+                        <link>https://neo4j.com/docs/api/java-driver/4.0/</link>
+                        <link>https://vertx.io/docs/${vertx.version}/apidocs/</link>
                         <link>http://reactivex.io/RxJava/1.x/javadoc/</link>
                         <link>http://reactivex.io/RxJava/javadoc/</link>
-                        <link>http://fasterxml.github.com/jackson-annotations/javadoc/2.9/</link>
-                        <link>http://fasterxml.github.io/jackson-core/javadoc/2.9/</link>
-                        <link>http://fasterxml.github.io/jackson-databind/javadoc/2.9/</link>
                     </links>
                 </configuration>
                 <executions>
