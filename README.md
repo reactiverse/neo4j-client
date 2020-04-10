@@ -63,6 +63,7 @@ neo4jClient
     }, error -> {
         // handle error
     });
+```
 
 ## Running tests in IntelliJ Idea
 
