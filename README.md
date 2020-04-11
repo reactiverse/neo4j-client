@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/reactiverse/neo4j-client.svg?branch=master)](https://travis-ci.org/reactiverse/neo4j-client.svg?branch=master)
+[![Build Status](https://travis-ci.org/reactiverse/neo4j-client.svg?branch=master)](https://travis-ci.org/github/reactiverse/neo4j-client)
 
 # Vert.x Neo4j client
 
