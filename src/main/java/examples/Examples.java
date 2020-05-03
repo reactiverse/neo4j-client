@@ -135,7 +135,7 @@ public class Examples {
                     Promise<Void> commitPromise = Promise.promise();
                     tx.commit(commitPromise);
                     return commitPromise.future();
-                }).setHandler(done -> {
+                }).onComplete(done -> {
                     if (done.succeeded()) {
                         System.out.println("Transaction committed");
                     } else {
