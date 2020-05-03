@@ -16,6 +16,16 @@ WARNING: This module has _Tech Preview_ status, this means the API can change be
 This client is based on the
 https://neo4j.com/docs/driver-manual/4.0/[Neo4j Async Java Driver].
 
+== Compatibility
+
+|===
+| Project | Vert.x | Neo4j Java Driver
+|  0.2.0  | 3.9.0  |       4.0.0
+|===
+
+At the moment, tests have been performed only on Neo4j Server 3.5.x.
+Neo4j Server 4.0 should be supported soon.
+
 == Using Vert.x Neo4j Client
 
 To use this project, add the following dependency to the _dependencies_ section of your build descriptor:
@@ -102,6 +112,13 @@ We provide an entry-point to configure the Neo4j client via an underlying {@link
 when creating the Neo4j client.
 
 The default constructor of {@link io.reactiverse.neo4j.options.Neo4jClientOptions} will configure a local connection to a Neo4j instance on default bolt port 7687, with {@link org.neo4j.driver.Config#defaultConfig}.
+
+Here's an example of creating a Neo4j client options :
+
+[source,$lang]
+----
+{@link examples.Examples#createOptions}
+----
 
 == Using the API
 

@@ -19,6 +19,8 @@ package examples;
 import io.reactiverse.neo4j.Neo4jClient;
 import io.reactiverse.neo4j.Neo4jRecordStream;
 import io.reactiverse.neo4j.Neo4jTransaction;
+import io.reactiverse.neo4j.options.Neo4jClientAuthOptions;
+import io.reactiverse.neo4j.options.Neo4jClientEncryptionOptions;
 import io.reactiverse.neo4j.options.Neo4jClientOptions;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -30,7 +32,28 @@ import org.neo4j.driver.summary.ResultSummary;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.neo4j.driver.Config.TrustStrategy.Strategy.TRUST_CUSTOM_CA_SIGNED_CERTIFICATES;
+
 public class Examples {
+
+    public void createOptions() {
+        Neo4jClientOptions neo4jClientOptions = new Neo4jClientOptions()
+                .setHost("192.168.0.5")
+                .setPort(7687)
+                .setAuthOptions(new Neo4jClientAuthOptions()
+                        .setUsername("neo4j")
+                        .setPassword("myPassword")
+                )
+                .setEncrypted(true)
+                .setEncryptionOptions(new Neo4jClientEncryptionOptions()
+                        .setHostnameVerification(true)
+                        .setCertificateFilePath("/path/to/certificate")
+                        .setStrategy(TRUST_CUSTOM_CA_SIGNED_CERTIFICATES))
+                .setLogLeakedSessions(true)
+                .setMaxConnectionPoolSize(200)
+                .setFetchSize(1000)
+                .setConnectionAcquisitionTimeoutMillis(60000);
+    }
 
     public void defaultSharedClient(Vertx vertx, Neo4jClientOptions config) {
         Neo4jClient.createShared(vertx, config);
