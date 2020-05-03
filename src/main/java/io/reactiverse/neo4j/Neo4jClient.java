@@ -42,7 +42,7 @@ public interface Neo4jClient {
     String DEFAULT_POOL_NAME = "DEFAULT_POOL";
 
     /**
-     * Creates a Neo4j client that shares its driver session with any other client having the same name.
+     * Same as {@link #createShared(Vertx, Neo4jClientOptions, String)} but with a default data source name
      *
      * @param vertx  the Vert.x instance
      * @param config  the driver configuration
@@ -51,6 +51,19 @@ public interface Neo4jClient {
      */
     static Neo4jClient createShared(Vertx vertx, Neo4jClientOptions config) {
         return new Neo4jClientImpl(vertx, config, DEFAULT_POOL_NAME);
+    }
+
+    /**
+     * Creates a Neo4j client that shares its driver session with any other client having the same name.
+     *
+     * @param vertx  the Vert.x instance
+     * @param config  the driver configuration
+     * @param dataSourceName  the data source name
+     *
+     * @return the client
+     */
+    static Neo4jClient createShared(Vertx vertx, Neo4jClientOptions config, String dataSourceName) {
+        return new Neo4jClientImpl(vertx, config, dataSourceName);
     }
 
     /**

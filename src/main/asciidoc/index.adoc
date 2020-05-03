@@ -1,0 +1,197 @@
+= Vert.x Neo4j client Manual
+
+A Vert.x client allowing to interact with a Neo4j instance (or cluster) with a straightforward API : perform read or write transactions to retrieve, save or delete nodes and relationships.
+This client will save you the boilerplate code to produce to open/close a Session, obtaining a read/write transaction, and avoid dealing with CompletionStages.
+
+WARNING: This module has _Tech Preview_ status, this means the API can change between versions.
+
+*Features*
+
+* Non-blocking
+* Lightweight
+* Supports a majority of the configuration options from the Neo4j Java Driver
+* Record streaming
+* RxJava 2
+
+This client is based on the
+https://neo4j.com/docs/driver-manual/4.0/[Neo4j Async Java Driver].
+
+== Using Vert.x Neo4j Client
+
+To use this project, add the following dependency to the _dependencies_ section of your build descriptor:
+
+* Maven (in your `pom.xml`):
+
+[source,xml,subs="+attributes"]
+----
+<dependency>
+  <groupId>io.reactiverse</groupId>
+  <artifactId>neo4j-client</artifactId>
+  <version>${maven.version}</version>
+</dependency>
+----
+
+* Gradle (in your `build.gradle` file):
+
+[source,groovy,subs="+attributes"]
+----
+compile 'io.reactiverse:neo4j-client:${maven.version}'
+----
+
+== Creating a client
+
+You can create a client in several ways:
+
+=== Using the default shared pool
+
+In most cases you will want to share a pool between different client instances.
+
+E.g. you scale your application by deploying multiple instances of your verticle and you want each verticle instance
+to share the same pool so you don't end up with multiple pools
+
+The simplest way to do this is as follows:
+
+[source,$lang]
+----
+{@link examples.Examples#defaultSharedClient}
+----
+
+The first call to {@link io.reactiverse.neo4j.Neo4jClient#createShared(io.vertx.core.Vertx, io.reactiverse.neo4j.options.Neo4jClientOptions)}
+will actually create the pool, and the specified config will be used.
+
+Subsequent calls will return a new client instance that uses the same pool, so the configuration won't be used.
+
+=== Specifying a pool source name
+
+You can create a client specifying a pool source name as follows
+
+[source,$lang]
+----
+{@link examples.Examples#customSharedClient}
+----
+
+If different clients are created using the same Vert.x instance and specifying the same pool name, they will
+share the same pool.
+
+The first call to {@link io.reactiverse.neo4j.Neo4jClient#createShared(io.vertx.core.Vertx, io.reactiverse.neo4j.options.Neo4jClientOptions, String)}
+will actually create the pool, and the specified config will be used.
+
+Subsequent calls will return a new client instance that uses the same pool, so the configuration won't be used.
+
+Use this way of creating if you wish different groups of clients to have different pools, e.g. they're
+interacting with different databases.
+
+=== Creating a client with a non shared data pool
+
+In most cases you will want to share a pool between different client instances.
+However, it's possible you want to create a client instance that doesn't share its pool with any other client.
+
+In that case you can use {@link io.reactiverse.neo4j.Neo4jClient#createNonShared(io.vertx.core.Vertx, io.reactiverse.neo4j.options.Neo4jClientOptions)}.
+
+[source,$lang]
+----
+{@link examples.Examples#nonSharedClient}
+----
+
+This is equivalent to calling {@link io.reactiverse.neo4j.Neo4jClient#createShared(io.vertx.core.Vertx, io.reactiverse.neo4j.options.Neo4jClientOptions, String)}
+with a unique pool name each time.
+
+=== Providing configuration options
+
+We provide an entry-point to configure the Neo4j client via an underlying {@link org.neo4j.driver.Config} instance. This can be done with {@link io.reactiverse.neo4j.options.Neo4jClientOptions}
+when creating the Neo4j client.
+
+The default constructor of {@link io.reactiverse.neo4j.options.Neo4jClientOptions} will configure a local connection to a Neo4j instance on default bolt port 7687, with {@link org.neo4j.driver.Config#defaultConfig}.
+
+== Using the API
+
+The client API is represented by {@link io.reactiverse.neo4j.Neo4jClient}.
+
+=== Execute a write transaction
+
+If you want to execute a write transaction (create, update or delete) and you just care about the number of nodes or relationships concerned for example, you can use
+{@link io.reactiverse.neo4j.Neo4jClient#execute}. This method has 2 different signatures, as you can provide a Cypher query with or without parameters.
+The transaction is automatically committed if no error occurs or rollbacked otherwise.
+
+This method will return a {@link org.neo4j.driver.summary.ResultSummary} containing all transaction details.
+
+Here's an example of creating a relationship between 2 nodes :
+
+[source,$lang]
+----
+{@link examples.Examples#simpleCreateNodesAndRelationship}
+----
+
+=== Delete and return results
+
+If you want to perform a write transaction which will delete several nodes/relationships, and you want as the same time to retrieve the deleted results, you have to use {@link io.reactiverse.neo4j.Neo4jClient#delete} which will return
+the deleted nodes/relationships as a list of {@link org.neo4j.driver.Record}.
+
+Here's an example of deleting a node and getting the result :
+
+[source,$lang]
+----
+{@link examples.Examples#simpleDelete}
+----
+
+=== Find a single record
+
+If your match query should return a single record, you use {@link io.reactiverse.neo4j.Neo4jClient#findOne}.
+This method will throw an exception if your query does not match any record, or if it matches several ones.
+
+Here's an example of retrieving a single person result :
+
+[source,$lang]
+----
+{@link examples.Examples#simpleFindOneExample}
+----
+
+=== Find several records
+
+If your match query should return several records, you use {@link io.reactiverse.neo4j.Neo4jClient#find}.
+
+Here's an example of retrieving several persons results :
+
+[source,$lang]
+----
+{@link examples.Examples#simpleFindExample}
+----
+
+=== Bulk writes
+
+If you want to perform several write queries in a single transaction, you can use {@link io.reactiverse.neo4j.Neo4jClient#bulkWrite}. Just use this method if you already know the queries to perform in advance, and their total number is low, as you
+will have to provide a list of all queries, which has impact on memory. In the end, the transaction is committed if no error occurs, or rollbacked otherwise.
+
+Here's an example of bulk writing :
+
+[source,$lang]
+----
+{@link examples.Examples#shouldWriteInBatch}
+----
+
+=== Write transaction manipulation
+
+If you want more control on a write transaction, we provide a way to obtain a {@link io.reactiverse.neo4j.Neo4jTransaction} which you can use to perform multiple queries before deciding on your own to commit or rollback it.
+This is particularly useful when you don't know the total number of queries to execute in a transaction, or this total number is high.
+
+Here's a example of write transaction fine control :
+
+[source,$lang]
+----
+{@link examples.Examples#executeQueriesInTransaction}
+----
+
+=== Stream records
+
+When the number of results to return is high, we provide a way to stream the results with back-pressure handling. You can use {@link io.reactiverse.neo4j.Neo4jClient#queryStream} which will return a {@link io.vertx.core.streams.ReadStream} of {@link org.neo4j.driver.Record}.
+
+Here's a example of record streaming :
+
+[source,$lang]
+----
+{@link examples.Examples#streamingRecords}
+----
+
+ifeval::["$lang" == "java"]
+include::override/rxjava2.adoc[]
+endif::[]

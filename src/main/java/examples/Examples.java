@@ -22,7 +22,6 @@ import io.reactiverse.neo4j.Neo4jTransaction;
 import io.reactiverse.neo4j.options.Neo4jClientOptions;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.docgen.Source;
 import org.neo4j.driver.Query;
 import org.neo4j.driver.Record;
 import org.neo4j.driver.Values;
@@ -31,11 +30,45 @@ import org.neo4j.driver.summary.ResultSummary;
 import java.util.ArrayList;
 import java.util.List;
 
-@Source
 public class Examples {
 
-    public void sharedClient(Vertx vertx, Neo4jClientOptions config) {
+    public void defaultSharedClient(Vertx vertx, Neo4jClientOptions config) {
         Neo4jClient.createShared(vertx, config);
+    }
+
+    public void customSharedClient(Vertx vertx, Neo4jClientOptions config, String dataSourceName) {
+        Neo4jClient.createShared(vertx, config, dataSourceName);
+    }
+
+    public void nonSharedClient(Vertx vertx, Neo4jClientOptions config) {
+        Neo4jClient.createNonShared(vertx, config);
+    }
+
+    public void simpleCreateNodesAndRelationship(Neo4jClient neo4jClient) {
+
+        neo4jClient.execute("CREATE (you:Person {name:$name1})-[:FRIEND]->(him:Person {name:$name2})", Values.parameters("name1", "John", "name2", "Jack"), ar -> {
+            if (ar.succeeded()) {
+                ResultSummary result = ar.result();
+                System.out.println("Got " + result.counters().nodesCreated() + " new nodes created");
+                System.out.println("Got " + result.counters().relationshipsCreated() + " new relationships created");
+            } else {
+                Throwable error = ar.cause();
+                System.out.println("Failure: " + error.getMessage());
+            }
+        });
+    }
+
+    public void simpleDelete(Neo4jClient neo4jClient) {
+
+        neo4jClient.delete("MATCH (you:Person {name:'You'}) DELETE you RETURN you", Values.parameters("name", "John"), ar -> {
+            if (ar.succeeded()) {
+                List<Record> results = ar.result();
+                System.out.println("Got deleted records");
+            } else {
+                Throwable error = ar.cause();
+                System.out.println("Failure: " + error.getMessage());
+            }
+        });
     }
 
     public void simpleFindExample(Neo4jClient neo4jClient) {

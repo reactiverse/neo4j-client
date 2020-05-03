@@ -20,18 +20,46 @@ import io.reactiverse.neo4j.options.Neo4jClientOptions;
 import io.reactiverse.reactivex.neo4j.Neo4jClient;
 import io.reactivex.Completable;
 import io.reactivex.Single;
-import io.vertx.docgen.Source;
 import io.vertx.reactivex.core.Vertx;
 import org.neo4j.driver.Record;
 import org.neo4j.driver.Values;
 
 import java.util.List;
 
-@Source
 public class RxExamples {
 
     public void sharedClient(Vertx vertx, Neo4jClientOptions config) {
         Neo4jClient.createShared(vertx, config);
+    }
+
+    public void customSharedClient(Vertx vertx, Neo4jClientOptions config, String dataSourceName) {
+        Neo4jClient.createShared(vertx, config, dataSourceName);
+    }
+
+    public void nonSharedClient(Vertx vertx, Neo4jClientOptions config) {
+        Neo4jClient.createNonShared(vertx, config);
+    }
+
+    public void simpleCreateNodesAndRelationship(Neo4jClient neo4jClient) {
+
+        neo4jClient.rxExecute("CREATE (you:Person {name:$name1})-[:FRIEND]->(him:Person {name:$name2})", Values.parameters("name1", "John", "name2", "Jack"))
+                .subscribe(summary -> {
+                    System.out.println("Got " + summary.counters().nodesCreated() + " new nodes created");
+                    System.out.println("Got " + summary.counters().relationshipsCreated() + " new relationships created");
+                }, error -> {
+                    System.out.println("Failure: " + error.getMessage());
+                });
+    }
+
+    public void simpleDelete(Neo4jClient neo4jClient) {
+
+        Single<List<Record>> single = neo4jClient.rxDelete("MATCH (you:Person {name:'You'}) DELETE you RETURN you", Values.parameters("name", "John"));
+
+        single.subscribe(results -> {
+            System.out.println("Got " + results.size() + " records deleted");
+        },  error -> {
+            System.out.println("Failure: " + error.getMessage());
+        });
     }
 
     public void simpleFindExample(Neo4jClient neo4jClient) {

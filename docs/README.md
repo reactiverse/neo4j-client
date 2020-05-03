@@ -72,7 +72,9 @@ neo4jClient
 
 ## Legal
 
-Originally developed by [Olympe S.A.](https://olympe.ch/)
+Originally developed by :
+
+[![](https://olympe.ch/wp-content/uploads/2018/08/logo_olympe_white.png)](https://olympe.ch/)
 
     Copyright (c) 2018-2020 Olympe S.A.
     
