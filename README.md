@@ -12,7 +12,7 @@ WARNING: This module has Tech Preview status, this means the API can change betw
 
 | Project | Vert.x | Neo4j Java Driver |
 | ------- | ------ | ----------------- |
-|  0.2.0  | 3.8.5  |       4.0.0       |
+|  0.2.0  | 3.9.0  |       4.0.0       |
 
 At the moment, tests have been performed only on Neo4j Server 3.5.x.
 Neo4j Server 4.0 should be supported soon.
