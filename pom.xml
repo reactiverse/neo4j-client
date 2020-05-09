@@ -16,14 +16,12 @@
  * limitations under the License.
  */
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.reactiverse</groupId>
     <artifactId>neo4j-client</artifactId>
-    <version>0.0.3-SNAPSHOT</version>
+    <version>0.0.3</version>
 
     <parent>
         <groupId>io.vertx</groupId>
@@ -322,7 +320,7 @@
                         <executions>
                             <execution>
                                 <id>attach-sources</id>
-                                <phase/>
+                                <phase />
                             </execution>
                         </executions>
                     </plugin>
@@ -332,7 +330,7 @@
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
-                                <phase/>
+                                <phase />
                             </execution>
                         </executions>
                     </plugin>
